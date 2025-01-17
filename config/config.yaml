@@ -4,7 +4,7 @@
 determinisitc: False
 seed: 100
 
-trainset_path: "/fast/najroldi/data/lm/slim_pajama/new_sp_15B_tokens/train"
+trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
 vocab_size: 50280
 seq_len: 2048
 sampler: 'sequential'
@@ -58,10 +58,10 @@ print_progress: True
 
 use_wandb: False
 wandb_project: 'llm'
-wandb_dir: '/fast/najroldi/logs/llm/wandb'
+wandb_dir: '/fast/slaing/logs/llm/wandb'
 wandb_run_name: 'tr_check'
 exp_name: 'tr_check'
-out_dir: '/fast/najroldi/exp/llm'
+out_dir: '/fast/slaing/exp/llm'
 over_write: True
 
 resume: False
