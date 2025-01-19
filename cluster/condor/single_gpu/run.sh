@@ -1,7 +1,7 @@
 #!/bin/bash
 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate ssm
+source ~/miniforge3/etc/profile.d/conda.sh
+conda activate 312nets
 
 # Job specific vars
 config=$1

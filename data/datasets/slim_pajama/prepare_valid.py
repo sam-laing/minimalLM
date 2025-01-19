@@ -23,7 +23,7 @@ from transformers import AutoTokenizer
 # Config
 
 # Your path where to save dataset
-out_path = "/fast/najroldi/data/lm/slim_pajama/new_valid"
+out_path = "/fast/slaing/data/lm/slim_pajama/new_valid"
 
 # HF dataset name
 dataset_name = "cerebras/SlimPajama-627B"
