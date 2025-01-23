@@ -30,3 +30,8 @@ Thumbs.db
 # Ignore Weights & Biases (wandb) files
 wandb/
 *.wandb
+
+# ignore the llm_pretrain logs
+llm_pretrain/
+llm_pretrain/logs/
+*.llm_pretrain_logs
