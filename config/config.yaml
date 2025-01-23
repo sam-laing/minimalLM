@@ -11,9 +11,9 @@ sampler: 'sequential'
 sampler_seed: null
 num_workers: 4
 
-eval: False
-validset_path: null
-eval_every_steps: null
+eval: True
+validset_path: "/fast/slaing/data/lm/slim_pajama/new_valid/validation" 
+eval_every_steps: 200
 
 model: 'transformer'
 d_model: 768
@@ -56,19 +56,20 @@ lr_end_pct: null
 log_every_steps: 1
 print_progress: True
 
-use_wandb: False
+use_wandb: True
 wandb_project: 'llm'
 wandb_dir: '/fast/slaing/logs/llm/wandb'
 wandb_run_name: 'tr_check'
 exp_name: 'tr_check'
 out_dir: '/fast/slaing/exp/llm'
+wandb_api_key: "0b4cb5f85aad923fbaec987675544b3d4530b0e4"
 over_write: True
 
 resume: False
 resume_micro_step: null
 resume_exp_name: null
 
-save_last_checkpoint: False
+save_last_checkpoint: True
 save_intermediate_checkpoints: False
 save_every_steps: null
 

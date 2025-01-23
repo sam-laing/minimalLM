@@ -41,6 +41,7 @@ def load_config(path, job_idx=None):
 
 def init_wandb(cfg):
   """Initalizes a wandb run"""
+  os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
   wandb.init(

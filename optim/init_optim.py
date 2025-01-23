@@ -61,6 +61,20 @@ def intialize_optimizer(param_groups, cfg):
       weight_decay=cfg.weight_decay,
     )
   
+  elif cfg.optim == 'nestingMA':
+    """   
+    - custom optimizer with adamw energy but taking moving average
+    of RMSprop gradients rather than dividing two moving averages
+    
+    """
+    from .nestingMA import NestedMA
+    optimizer = NestedMA(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      weight_decay=cfg.weight_decay
+    )
+  
   else:
     raise NotImplementedError(f"Not implemented optim: {cfg.optim}.")
   

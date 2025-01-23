@@ -1,11 +1,11 @@
 
 # Define variables
 # NOTE: executable should be a full path
-LOGS_DIR=/fast/slaing/logs/llm
-executable=/home/slaing/llm_pretrain/cluster/condor/single_gpu/run.sh
+LOGS_DIR=/home/slaing/minimalLM/llm_pretrain/logs
+executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
 
 # Job specific vars
-config=config/config.yaml
+config=/home/slaing/minimalLM/config/config.yaml
 n_jobs=1
 
 # Args
