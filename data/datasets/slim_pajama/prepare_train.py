@@ -27,14 +27,14 @@ from transformers import AutoTokenizer
 # Config
 
 # Your path where to save dataset
-out_path = "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens"
+out_path = "/fast/slaing/data/lm/slim_pajama/new_sp_3B_tokens"
 
 # HF dataset name
 dataset_name = "cerebras/SlimPajama-627B"
 split = 'train'
 
-# nrows = 3_000_000 # ~ 3B tokens
-nrows = 15_000_000 # ~ 15B tokens
+nrows = 3_000_000 # ~ 3B tokens
+# nrows = 15_000_000 # ~ 15B tokens
 # nrows = 10_000_000 # ~ 10B tokens
 # nrows = 1_000 # ~ 1M tokens
 

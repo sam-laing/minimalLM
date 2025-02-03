@@ -33,10 +33,8 @@ class NestedMA(Optimizer):
         lr: float = 1e-4,
         eps: float = 1e-8,
         betas: Betas2 = (0.9, 0.99),
-        do_bias_correction: bool = True,
+        do_bias_correction: bool = False,
         weight_decay: float = 0.0,
-        weight_decouple: bool = True,
-        lp: float = 2.0,
     ):
         if lr <= 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -54,8 +52,6 @@ class NestedMA(Optimizer):
             )
         defaults = dict(lr=lr, betas=betas, weight_decay=weight_decay, eps=eps, do_bias_correction=do_bias_correction)
         super().__init__(params, defaults)
-        self._weight_decouple = weight_decouple
-        self.lp = lp
     
     # not needed
     def _get_options(
@@ -72,7 +68,7 @@ class NestedMA(Optimizer):
     def _rms(self, tensor: torch.Tensor) -> float:
         return tensor.norm(2) / (tensor.numel() ** 0.5)
     
-    
+    @torch.no_grad() 
     def step(self, closure: OptLossClosure = None) -> OptFloat:
         loss = None
         if closure is not None:
@@ -90,10 +86,8 @@ class NestedMA(Optimizer):
                 if group["weight_decay"] != 0:
                     #p.data = p.data + group["weight_decay"] * torch.norm(p.data, p=self.lp)
                     # decoupled weight decay as in AdamW but good ol' Lp norm easily possible too 
-                    if self._weight_decouple:
-                        grad.add_(group["weight_decay"] * torch.norm(p.data, p=self.lp))
-                    else:
-                        grad.add_(group["weight_decay"] * group["lr"] * torch.norm(p.data, p=self.lp))
+                    p.data.mul_(1 - group["lr"] * group["weight_decay"])
+                    
                 state = self.state[p]
 
                 # State initialization

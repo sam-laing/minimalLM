@@ -16,6 +16,7 @@ def intialize_optimizer(param_groups, cfg):
       param_groups,
       lr=cfg.lr,
       betas=[cfg.beta1, cfg.beta2],
+      eps=cfg.eps,
       weight_decay=cfg.weight_decay,
       fused=cfg.fused_optim, 
     )
@@ -72,7 +73,9 @@ def intialize_optimizer(param_groups, cfg):
       param_groups,
       lr=cfg.lr,
       betas=[cfg.beta1, cfg.beta2],
-      weight_decay=cfg.weight_decay
+      weight_decay=cfg.weight_decay, 
+      eps=cfg.eps,
+      do_bias_correction=False
     )
   
   else:

@@ -10,6 +10,8 @@ from itertools import product
 from collections import namedtuple
 
 
+
+
 def load_config(path, job_idx=None):
   """
   Parse a yaml file and return the correspondent config as a namedtuple.
@@ -41,12 +43,13 @@ def load_config(path, job_idx=None):
 
 def init_wandb(cfg):
   """Initalizes a wandb run"""
-  os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
+  #os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
+  wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, eps={cfg.eps}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}"
   wandb.init(
     project=cfg.wandb_project, 
-    name=cfg.wandb_run_name, 
+    name=wandb_run_name, 
     dir=cfg.wandb_dir,
     config=cfg._asdict()
   )
@@ -58,8 +61,9 @@ def maybe_make_dir(cfg, job_idx=None):
     return
   if cfg.resume and cfg.resume_exp_name is None:  # if resuming from the same exp
     return
-
-  exp_dir = os.path.join(cfg.out_dir, cfg.exp_name)
+  
+  exp_name = f"{cfg.optim}, lr={cfg.lr}, eps={cfg.eps}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}"
+  exp_dir = os.path.join(cfg.out_dir, exp_name)
   if job_idx is not None:  # subfolder for each job in the sweep
     exp_dir = os.path.join(exp_dir, f"job_idx_{job_idx}")
 
