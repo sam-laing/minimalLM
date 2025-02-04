@@ -3,6 +3,10 @@
 import torch
 import schedulefree
 from .lr_schedule import WarmupCosine, WSD, WarmupConstant
+from functools import partial
+
+# import from folder quant_adam the init
+from quant_adam import CDFQAdam, FP8Adam, AdamFp8, AdamCDFQ8, AdamCDFQ4, AdamCDFQ3, AdamCDFQ2, Adam4bit, AdamGQ3, AdamGQ4
 
 
 def intialize_optimizer(param_groups, cfg):
@@ -19,6 +23,15 @@ def intialize_optimizer(param_groups, cfg):
       eps=cfg.eps,
       weight_decay=cfg.weight_decay,
       fused=cfg.fused_optim, 
+    )
+  
+  elif cfg.optim == "adam":
+    optimizer = torch.optim.Adam(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      eps=cfg.eps,
+      weight_decay=cfg.weight_decay,
     )
   
   elif cfg.optim == 'nadamw':
@@ -61,7 +74,9 @@ def intialize_optimizer(param_groups, cfg):
       betas=[cfg.beta1, cfg.beta2],
       weight_decay=cfg.weight_decay,
     )
-  
+
+
+    
   elif cfg.optim == 'nestingMA':
     """   
     - custom optimizer with adamw energy but taking moving average
@@ -77,6 +92,26 @@ def intialize_optimizer(param_groups, cfg):
       eps=cfg.eps,
       do_bias_correction=False
     )
+  elif cfg.optim == "adamcdfq4":
+    optimizer = partial(AdamCDFQ4, block_size=cfg.block_size)
+    optimizer = optimizer(
+      param_groups, lr=cfg.lr, betas=(cfg.beta1, cfg.beta2), 
+      eps=cfg.eps, weight_decay=cfg.weight_decay
+      )
+
+  elif cfg.optim == "adamfp8":
+    optimizer = partial(AdamFp8, block_size=cfg.block_size)
+    optimizer = optimizer(
+      param_groups, lr=cfg.lr, betas=(cfg.beta1, cfg.beta2), 
+      eps=cfg.eps, weight_decay=cfg.weight_decay
+      )
+    
+  elif cfg.optim == "adam4bit":
+    optimizer = partial(Adam4bit, block_size=cfg.block_size)
+    optimizer = optimizer(
+      param_groups, lr=cfg.lr, betas=(cfg.beta1, cfg.beta2), 
+      eps=cfg.eps, weight_decay=cfg.weight_decay
+      )
   
   else:
     raise NotImplementedError(f"Not implemented optim: {cfg.optim}.")

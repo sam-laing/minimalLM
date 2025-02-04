@@ -1,10 +1,14 @@
 ## CONFIG file
 ## change paths with your own!
 
+#can definitely make smaller model if needs be
+
+
+
 determinisitc: False
 seed: 100
 
-trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
+trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_3B_tokens/train" # make sure train dataset saved here
 vocab_size: 50280
 seq_len: 2048
 sampler: 'sequential'
@@ -12,7 +16,7 @@ sampler_seed: null
 num_workers: 4
 
 eval: True
-validset_path: "/fast/slaing/data/lm/slim_pajama/new_valid/validation" 
+validset_path: "/fast/slaing/data/lm/slim_pajama/new_valid/validation" # make sure val dataset saved here
 eval_every_steps: 20
 
 model: 'transformer'
@@ -39,6 +43,7 @@ grad_accumulation_steps: 8
 dtype: 'bfloat16'
 
 optim: "adamw"
+block_size: 128
 fused_optim: False 
 lr: 3.e-3
 weight_decay: 0.1
@@ -61,10 +66,10 @@ print_progress: True
 use_wandb: True
 wandb_project: 'llm'
 wandb_dir: '/fast/slaing/logs/llm/wandb'
-wandb_run_name: "tr_check_not_fused" 
-exp_name: 'tr_check_not_fused'
-out_dir: '/fast/slaing/exp/llm'
-wandb_api_key: "0b4cb5f85aad923fbaec987675544b3d4530b0e4"
+wandb_run_name: "tr_check_not_fused" #replaced by just naming it with hyperparams of interest using f string  
+exp_name: 'tr_check_not_fused' # need to put name here too for saved models
+out_dir: '/fast/slaing/exp/llm/quantised_experiments' # replace with your username and make sure exists
+wandb_api_key: "0b4cb5f85aad923fbaec987675544b3d4530b0e4" #replace with your own 
 over_write: True
 
 resume: False
@@ -74,4 +79,6 @@ resume_exp_name: null
 save_last_checkpoint: True
 save_intermediate_checkpoints: False
 save_every_steps: null
+
+
 
