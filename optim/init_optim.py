@@ -95,21 +95,21 @@ def intialize_optimizer(param_groups, cfg):
   elif cfg.optim == "adamcdfq4":
     optimizer = partial(AdamCDFQ4, block_size=cfg.block_size)
     optimizer = optimizer(
-      param_groups, lr=cfg.lr, betas=(cfg.beta1, cfg.beta2), 
+      param_groups, lr=torch.tensor(cfg.lr), betas=(cfg.beta1, cfg.beta2), 
       eps=cfg.eps, weight_decay=cfg.weight_decay
       )
 
   elif cfg.optim == "adamfp8":
     optimizer = partial(AdamFp8, block_size=cfg.block_size)
     optimizer = optimizer(
-      param_groups, lr=cfg.lr, betas=(cfg.beta1, cfg.beta2), 
+      param_groups, lr=torch.tensor(cfg.lr), betas=(cfg.beta1, cfg.beta2), 
       eps=cfg.eps, weight_decay=cfg.weight_decay
       )
     
   elif cfg.optim == "adam4bit":
     optimizer = partial(Adam4bit, block_size=cfg.block_size)
     optimizer = optimizer(
-      param_groups, lr=cfg.lr, betas=(cfg.beta1, cfg.beta2), 
+      param_groups, lr=torch.tensor(cfg.lr), betas=(cfg.beta1, cfg.beta2), 
       eps=cfg.eps, weight_decay=cfg.weight_decay
       )
   
