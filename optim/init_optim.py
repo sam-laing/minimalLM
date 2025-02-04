@@ -77,6 +77,14 @@ def intialize_optimizer(param_groups, cfg):
       eps=cfg.eps,
       do_bias_correction=False
     )
+
+
+    ### The quantised optimizers
+    ### need to do some elifs here and understand the optimizers a bit better
+    
+
+  
+  
   
   else:
     raise NotImplementedError(f"Not implemented optim: {cfg.optim}.")

@@ -11,7 +11,6 @@ from collections import namedtuple
 
 
 
-
 def load_config(path, job_idx=None):
   """
   Parse a yaml file and return the correspondent config as a namedtuple.
@@ -79,7 +78,30 @@ def maybe_make_dir(cfg, job_idx=None):
     yaml.dump(cfg._asdict(), file, default_flow_style=False)
 
 
-def log(cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_size):
+
+
+def maybe_make_folders_for_plots(model, path):
+    # Create a folder for the model
+    model_folder = os.path.join(path, model.__class__.__name__)
+    #iterate through all layers 
+    for name, param in model.named_parameters():
+        # Create a folder for the layer
+        layer_folder = os.path.join(model_folder, name)
+        os.makedirs(layer_folder, exist_ok=True)
+        # make two folders called exp_avg and exp_avg_sq inside here
+
+        os.makedirs(os.path.join(layer_folder, "exp_avg"), exist_ok=True)
+        os.makedirs(os.path.join(layer_folder, "exp_avg_sq"), exist_ok=True)
+
+        
+
+# editing definition of log to include kl divergence of adam layer and hypothesis test of whether normal
+def log(
+    cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_size,
+
+
+    
+    ):
   "Computes new metrcs and appends them to metrics. Logs on wandb. Prints log."
   # NOTE: train_losses is an array of losses, if DDP, this is from master_process only
   # NOTE: valid_loss is a float, already reduced across GPUs
@@ -94,6 +116,9 @@ def log(cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_siz
     "lr": optimizer.param_groups[0].get("lr", float("NaN")),
     "train/loss": train_loss,
     "train/ppl": math.exp(train_loss),
+
+
+
   }
   if valid_loss is not None:
     new_metrics["valid/loss"] = valid_loss
@@ -121,3 +146,23 @@ def print_master(msg):
   
   if master_process:
     print(msg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
+
