@@ -10,7 +10,7 @@ from data import get_dataloaders
 from checkpoint_utils import save_checkpoint, maybe_load_checkpoint
 from models import construct_model
 from engine import TorchEngine
-from .optim.quant_adam.AOAdam import _AdamBase
+from optim.quant_adam.AOAdam import _AdamBase
 
 flags.DEFINE_string('config', 'config/config.yaml', 'Path to config.yaml file.')
 flags.DEFINE_integer('job_idx', None, 'Job idx for job-array sweeps. From 0 to n-1.')
@@ -23,6 +23,8 @@ def main(_):
   cfg, _ = utils.load_config(CFG_PATH, JOB_IDX)
   
   local_rank, world_size, device, master_process = pytorch_setup(cfg)
+
+  print(cfg)
   
   if master_process:
     utils.maybe_make_dir(cfg, JOB_IDX)
@@ -43,8 +45,8 @@ def main(_):
   engine = TorchEngine(model, cfg, device, local_rank, ckpt)
 
   optimizer = engine.optimizer
-  if cfg.log_quant_error:
-    assert isinstance(_AdamBase, optimizer), "Only AOAdam is supported for logging quantization error" 
+#  if cfg.log_quant_error:
+#    assert isinstance(_AdamBase, optimizer), "Only AOAdam is supported for logging quantization error" 
 
   
   # Training
@@ -72,8 +74,8 @@ def main(_):
       if master_process:
         utils.log(cfg, metrics, micro_step, train_losses, valid_loss, engine.optimizer, world_size)
       train_losses = []
-      if cfg.log_quant_error:
-        optimizer = engine.optimizer
+      #if cfg.log_quant_error:
+      #  optimizer = engine.optimizer
         # still need to log ....
 
     

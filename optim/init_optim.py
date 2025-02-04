@@ -6,7 +6,7 @@ from .lr_schedule import WarmupCosine, WSD, WarmupConstant
 from functools import partial
 
 # import from folder quant_adam the init
-from quant_adam import CDFQAdam, FP8Adam, AdamFp8, AdamCDFQ8, AdamCDFQ4, AdamCDFQ3, AdamCDFQ2, Adam4bit, AdamGQ3, AdamGQ4
+from .quant_adam import CDFQAdam, FP8Adam, AdamFp8, AdamCDFQ8, AdamCDFQ4, AdamCDFQ3, AdamCDFQ2, Adam4bit, AdamGQ3, AdamGQ4
 
 
 def intialize_optimizer(param_groups, cfg):

@@ -98,6 +98,10 @@ def log(cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_siz
   if valid_loss is not None:
     new_metrics["valid/loss"] = valid_loss
     new_metrics["valid/ppl"] = math.exp(valid_loss)
+  
+  #if cfg.log_quant_error:
+
+#    pass
 
   for k,v in new_metrics.items():
     metrics[k].append(v)
