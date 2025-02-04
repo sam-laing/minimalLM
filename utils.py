@@ -112,6 +112,8 @@ def log(cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_siz
   if cfg.use_wandb:
     wandb.log(new_metrics)
 
+  
+
 
 def print_master(msg):
   """Prints only in master process if using multiple GPUs."""
