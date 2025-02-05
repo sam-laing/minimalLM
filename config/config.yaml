@@ -49,7 +49,7 @@ fused_optim: False  # for fairness of comparison, should be false
 lr: 3.e-3
 weight_decay: 0.1
 beta1: 0.9
-beta2: 0.97
+beta2: 0.95
 dampening: 0.1
 eps: 1.e-8
 grad_clip: 1.0
