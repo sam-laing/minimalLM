@@ -45,8 +45,10 @@ def main(_):
   engine = TorchEngine(model, cfg, device, local_rank, ckpt)
 
   optimizer = engine.optimizer
-#  if cfg.log_quant_error:
-#    assert isinstance(_AdamBase, optimizer), "Only AOAdam is supported for logging quantization error" 
+  if cfg.log_quant_error:
+    assert isinstance(_AdamBase, optimizer), "Only AOAdam is supported for logging quantization error" 
+    optimizer_state = optimizer.state_dict()
+
 
   
   # Training
