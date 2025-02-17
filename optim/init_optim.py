@@ -66,7 +66,6 @@ def intialize_optimizer(param_groups, cfg):
     """   
     - custom optimizer with adamw energy but taking moving average
     of RMSprop gradients rather than dividing two moving averages
-    
     """
     from .nestingMA import NestedMA
     optimizer = NestedMA(
@@ -77,6 +76,46 @@ def intialize_optimizer(param_groups, cfg):
       eps=cfg.eps,
       do_bias_correction=False
     )
+    
+  elif cfg.optim == "muon":
+    from .muon import Muon  
+    optimizer = Muon(
+      param_groups,
+      lr=cfg.lr,
+      momentum=cfg.beta1,
+      nesterov=cfg.nesterov,
+      ns_steps=cfg.ns_steps
+    )
+
+  elif cfg.optim == "lion":
+    from .lion import Lion
+    optimizer = Lion(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      weight_decay=cfg.weight_decay
+    )
+  elif cfg.optim == "shampoo":
+    from .shampoo import Shampoo
+    optimizer = Shampoo(
+      param_groups,
+      lr=cfg.lr,
+      momentum=cfg.beta1,
+      weight_decay=cfg.weight_decay,
+      eps=cfg.eps,
+      update_freq = 1
+    )
+  
+  elif cfg.optim == "soap":
+    from .soap import SOAP
+    optimizer = SOAP(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      weight_decay=cfg.weight_decay, 
+      eps=cfg.eps
+    )
+
   
   else:
     raise NotImplementedError(f"Not implemented optim: {cfg.optim}.")
