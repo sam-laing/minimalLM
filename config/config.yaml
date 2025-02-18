@@ -38,7 +38,7 @@ grad_accumulation_steps: 8
 # note: float16 data type will automatically use a GradScaler
 dtype: 'bfloat16'
 
-optim: "adamw"
+optim: "muon"
 fused_optim: False 
 lr: 3.e-3
 weight_decay: 0.1
