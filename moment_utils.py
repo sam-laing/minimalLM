@@ -10,6 +10,32 @@ from torch import Tensor
 import torch.distributions as dist
 import matplotlib.pyplot as plt
 
+def get_moment_dict(model, optimizer, micro_step)->dict:
+  """
+  Iterates through the optimizer's state dict and records the exp_avg and
+  exp_avg_sq tensors for each layer. Saves the tensors in a dictionary at full precision.
+
+  Args:
+      model
+      optimizer (torch.optim.Optimizer): The AdamW optimizer.
+      micro_step (int): The current micro step (used for naming the saved file).
+
+  """
+  param_to_name = {id(param): name for name, param in model.named_parameters()}
+
+  moment_dict = {}
+  for param_group in optimizer.param_groups:
+    for param in param_group['params']:
+      if param in optimizer.state:
+        state = optimizer.state[param]
+        if ('exp_avg' in state) and ('exp_avg_sq' in state):
+          moment_dict[param_to_name[id(param)]] = {
+              'exp_avg': state['exp_avg'].clone(),
+              'exp_avg_sq': state['exp_avg_sq'].clone()
+          }
+  
+  return moment_dict
+
 def get_histogram_for_adam_layer(layer_tensor, n_bins=100):
     """Returns normalized histogram and bin edges"""
     min_elt, max_elt = layer_tensor.min(), layer_tensor.max()
@@ -25,6 +51,7 @@ def get_mean_and_variance(layer_tensor: Tensor):
         layer_tensor = layer_tensor.view(-1)
     """Returns mean and variance of tensor"""
     return layer_tensor.mean(), layer_tensor.var(unbiased=True)
+
 
 def compute_kl_div_from_normal(layer_tensor: Tensor, nbins: int = 100, plot: bool = False):
     """Compute KL divergence between tensor distribution and matching normal"""
