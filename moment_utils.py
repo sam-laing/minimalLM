@@ -10,7 +10,7 @@ from torch import Tensor
 import torch.distributions as dist
 import matplotlib.pyplot as plt
 
-def get_moment_dict(model, optimizer, micro_step)->dict:
+def get_moment_dict(model, optimizer)->dict:
   """
   Iterates through the optimizer's state dict and records the exp_avg and
   exp_avg_sq tensors for each layer. Saves the tensors in a dictionary at full precision.
