@@ -70,7 +70,10 @@ class Lion(Optimizer):
         # State initialization
         if len(state) == 0:
           # Exponential moving average of gradient values
-          state['exp_avg'] = torch.zeros_like(p)
+          #state['exp_avg'] = torch.zeros_like(p)
+          #try just doing init with grad rather than zeros
+          state['exp_avg'] = grad.clone()
+          
 
         exp_avg = state['exp_avg']
         beta1, beta2 = group['betas']

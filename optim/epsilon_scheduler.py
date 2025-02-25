@@ -82,3 +82,62 @@ class StepEpsScheduler(EpsScheduler):
         if (self.last_epoch == 0) or (self.last_epoch % self.step_size != 0):
             return [group['eps'] for group in self.optimizer.param_groups]
         return [group['eps'] * self.growth_factor for group in self.optimizer.param_groups]
+    
+
+def make_eps_func(
+        e_0: float = 1e-8, 
+        e_max: float = 1e-3, 
+        w: float = 0.2, 
+        E: float = 0.8, 
+        T: int = 1000, 
+        kappa: float = 0.9  # Controls the growth rate
+    ):
+    def eps_func(t):
+        assert (t >= 0 and t <= T), "t must be in [0, T]"
+        assert kappa > 0, "kappa must be positive"
+
+        # Define k based on the transition interval length
+        L = T * (E - w)  # Length of the transition interval
+        k = kappa / L    # Scale k with the interval length
+
+        if t >= 0 and t < w * T:
+            return e_0
+        elif t >= E * T and t <= T:
+            return e_max
+        elif t >= w * T and t <= E * T:
+            # Exponential transition
+            A = (e_max - e_0) / (math.exp(kappa) - 1)
+            B = e_0 - A
+            return A * math.exp(k * (t - w * T)) + B
+
+    return eps_func
+
+class Adam2SGD(EpsScheduler):
+    def __init__(
+        self, 
+        optimizer: Optimizer,
+        step_size: int,
+        max_eps: float, 
+        init_eps: float = 1e-8,
+        transition_function: str = "exponential", 
+        growth_factor: float = 10.0,
+        last_epoch: int = -1,
+        verbose: bool = False, 
+        warmup: float = 0.3, 
+        end_phase: float = 0.85,
+        total_steps: int = 1000
+    ):
+        self.step_size = step_size
+        self.warmup_steps = warmup * total_steps
+        self.end_steps = end_phase * total_steps
+        self.transition_function = transition_function
+        
+
+        self.eps_func = make_eps_func(e_0=init_eps, e_max=max_eps, w=warmup, E=end_phase, T=total_steps, kappa=0.9)
+
+        super().__init__(optimizer, last_epoch, verbose)
+
+    def get_eps(self) -> List[float]:
+        if (self.last_epoch == 0) or (self.last_epoch % self.step_size != 0):
+            return [group['eps'] for group in self.optimizer.param_groups]
+        return [self.eps_func(self.last_epoch) for group in self.optimizer.param_groups]

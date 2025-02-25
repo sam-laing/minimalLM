@@ -38,9 +38,9 @@ grad_accumulation_steps: 8
 # note: float16 data type will automatically use a GradScaler
 dtype: 'bfloat16'
 
-optim: "muon"
+optim: "lion"
 fused_optim: False 
-lr: 3.e-3
+lr: 3.e-4
 weight_decay: 0.1
 beta1: 0.9
 beta2: 0.97
@@ -75,3 +75,5 @@ save_last_checkpoint: True
 save_intermediate_checkpoints: False
 save_every_steps: null
 
+track_moments: False
+moment_plots: /fast/slaing/adam_moment_plots/llm
