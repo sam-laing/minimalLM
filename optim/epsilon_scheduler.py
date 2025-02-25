@@ -2,6 +2,7 @@ from typing import List, Optional
 import torch
 from torch.optim import Optimizer
 from optim.nestingMA import NestedMA
+import math
 
 class EpsScheduler:
     """Base class for epsilon parameter schedulers."""
