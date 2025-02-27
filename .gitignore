@@ -35,3 +35,8 @@ wandb/
 llm_pretrain/
 llm_pretrain/logs/
 *.llm_pretrain_logs
+
+
+# ignore all but config.yaml yaml files
+!**/config.yaml
+*.yaml
