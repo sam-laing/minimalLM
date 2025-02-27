@@ -57,7 +57,14 @@ class Muon(torch.optim.Optimizer):
         self.rank = rank
         self.world_size = world_size
         defaults = dict(lr=lr, weight_decay=weight_decay, momentum=momentum, nesterov=nesterov, ns_steps=ns_steps)
-        params: list[Tensor] = [*params]
+        # Check if params is already parameter groups
+        if isinstance(params, list) and len(params) > 0 and isinstance(params[0], dict) and 'params' in params[0]:
+            # Extract parameters from parameter groups
+            parameters = []
+            for param_group in params:
+                parameters.extend(param_group['params'])
+            params = parameters
+        params = list(params)
         param_groups = []
         for size in {p.numel() for p in params}:
             b = torch.empty(world_size, size, dtype=torch.bfloat16, device="cuda")

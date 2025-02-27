@@ -9,7 +9,7 @@ Params = dict
 def _matrix_power(matrix: torch.Tensor, power: float) -> torch.Tensor:
     # use CPU for svd for speed up
     device = matrix.device
-    matrix = matrix.cpu()
+    #matrix = matrix.cpu()
     u, s, v = torch.svd(matrix)
     return (u @ s.pow_(power).diag() @ v.t()).to(device)
 
