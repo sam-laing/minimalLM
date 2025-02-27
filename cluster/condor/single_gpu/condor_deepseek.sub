@@ -2,7 +2,7 @@
 # Define variables
 # NOTE: executable should be a full path
 LOGS_DIR=/home/slaing/minimalLM/llm_pretrain/logs
-executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
+executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run_deepseek.sh
 
 # Job specific vars
 config=/home/slaing/minimalLM/config/nestedMA_config.yaml

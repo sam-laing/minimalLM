@@ -29,6 +29,9 @@ def construct_model(cfg):
     model =  AutoModelForCausalLM.from_config(model_cfg) # NOTE: vocab_size=50304 here!
     model.init_weights() # explict init, since I am not sure it is done in 'from_config'
   
+  elif cfg.model == "deepseek":
+    from models.deepseek.model import Transformer, ModelArgs 
+  
   else:
     raise NotImplementedError(f"Not implemented model: {cfg.model}.")
   
