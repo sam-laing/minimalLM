@@ -128,4 +128,8 @@ class Transformer(nn.Module):
             if not self.lm_head.weight is self.embed_tokens.weight:  # if no weight tying
                 n_params -= self.lm_head.weight.numel()
         return n_params
+    
+    def __repr__(self):
+        n_params = self.count_params()
+        return f"Custom Transformer({n_params:_} params)"
 

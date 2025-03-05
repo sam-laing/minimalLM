@@ -21,6 +21,28 @@ def construct_model(cfg):
       tie_embeddings = cfg.tie_embeddings
     )
     model = Transformer(model_cfg)
+  
+  elif cfg.model == "llama3":
+    from llama import Transformer, ModelArgs
+    import fairscale.nn.model_parallel.initialize as fs_init
+    
+    # Initialize model parallel only when needed with proper world size
+    if not fs_init.model_parallel_is_initialized():
+        fs_init.initialize_model_parallel(cfg.get('model_parallel_size', 1))
+   
+    model_cfg = ModelArgs(
+      dim=cfg.d_model,
+      n_layers=cfg.n_layers,
+      n_heads=cfg.n_heads,
+      vocab_size=cfg.vocab_size,
+      multiple_of=256,  # Default from LLaMA model
+      norm_eps=1e-5,
+      max_seq_len=cfg.seq_len,
+      max_batch_size=cfg.batch_size
+    )
+    model = Transformer(model_cfg)
+    model.model_type = "llama3"
+
 
   # Pythia
   elif cfg.model.startswith("pythia"):
@@ -30,7 +52,8 @@ def construct_model(cfg):
     model.init_weights() # explict init, since I am not sure it is done in 'from_config'
   
   elif cfg.model == "deepseek":
-    from models.deepseek.model import Transformer, ModelArgs 
+    from models.deepseek.model import Transformer, ModelArgs
+    raise NotImplementedError("DeepSeek model is not implemented yet.") 
   
   else:
     raise NotImplementedError(f"Not implemented model: {cfg.model}.")

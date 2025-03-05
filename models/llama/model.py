@@ -300,3 +300,7 @@ class Transformer(nn.Module):
         h = self.norm(h)
         output = self.output(h).float()
         return output
+    
+    def __repr__(self):
+        n_params = sum(p.numel() for p in self.parameters())
+        return f"Llama3 with ({n_params:_} parameters)"

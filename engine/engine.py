@@ -152,7 +152,10 @@ class TorchEngine(torch.nn.Module):
     for batch in dataloader:
       inputs, targets = _move_to_device(batch, self.seq_len, self.device)
       with self.ctx:
-        output = self.model(inputs)
+        if hasattr(self.model, "model_type") and self.model.model_type == "llama3":
+          output = self.model(inputs, start_pos=0)
+        else:
+          output = self.model(inputs)
         logits = getattr(output, 'logits', output)
         loss = self.criterion(logits.view(-1, logits.size(-1)), targets.view(-1))
     
