@@ -115,6 +115,29 @@ def intialize_optimizer(param_groups, cfg):
       weight_decay=cfg.weight_decay, 
       eps=cfg.eps
     )
+  elif cfg.optim == "adam2sgd":
+    from .adam2sgd import Adam2SGD
+    """    
+    steps_budget: 4800
+
+    # note: this is micro batch size if grad_accumulation_steps>1
+    # note: with ddp, effective batch size = batch_size * grad_accumulation_steps * ddp_world_size
+    micro_batch_size: 32
+    grad_accumulation_steps: 8
+    """
+    update_steps  = int(cfg.steps_budget / cfg.grad_accumulation_steps)
+
+
+    optimizer = Adam2SGD(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      weight_decay=cfg.weight_decay,
+      update_steps=update_steps,
+      adam_to_sgd_ratio=cfg.adam_to_sgd_ratio,
+      do_bias_correction=cfg.do_bias_correction,
+    )
+
 
   
   else:

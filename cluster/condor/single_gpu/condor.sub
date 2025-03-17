@@ -5,8 +5,8 @@ LOGS_DIR=/home/slaing/minimalLM/llm_pretrain/logs
 executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
 
 # Job specific vars
-config=/home/slaing/minimalLM/config/nestedMA_config.yaml
-n_jobs=5
+config=/home/slaing/minimalLM/config/config.yaml
+n_jobs=4
 
 # Args
 arguments = $(config) $(Process)
