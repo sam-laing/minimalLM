@@ -65,10 +65,10 @@ def _get_sampler(train_set, cfg, start_step):
   
   if cfg.resume:
     if ddp:
-      sampler = StatefulDistributedSampler(train_set, batch_size=cfg.micro_batch_size)
+      sampler = StatefulDistributedSampler(train_set, batch_size=cfg.micro_batch_size, seed=cfg.sampler_seed)
       sampler.set_start_iter(start_step)
     else:
-      sampler = StatefulSequentialSampler(train_set, batch_size=cfg.micro_batch_size, start_idx=start_step)
+      sampler = StatefulSequentialSampler(train_set, batch_size=cfg.micro_batch_size, start_idx=start_step, seed=cfg.sampler_seed)
   else:
     if ddp:
       sampler = DistributedSampler(train_set, drop_last=True)

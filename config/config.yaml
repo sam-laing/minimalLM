@@ -1,8 +1,9 @@
 ## CONFIG file
 ## change paths with your own!
 
-determinisitc: True
+deterministic: True
 seed: 100
+sampler_seed: 100
 
 trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
 vocab_size: 50280
@@ -40,7 +41,7 @@ dtype: 'bfloat16'
 
 optim: "adam2sgd"
 fused_optim: False 
-lr: 3.e-4
+lr: 3.e-3
 weight_decay: 0.1
 beta1: 0.9
 beta2: 0.97

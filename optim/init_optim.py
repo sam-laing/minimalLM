@@ -125,7 +125,6 @@ def intialize_optimizer(param_groups, cfg):
     micro_batch_size: 32
     grad_accumulation_steps: 8
     """
-    update_steps  = int(cfg.steps_budget / cfg.grad_accumulation_steps)
 
 
     optimizer = Adam2SGD(
@@ -133,7 +132,7 @@ def intialize_optimizer(param_groups, cfg):
       lr=cfg.lr,
       betas=[cfg.beta1, cfg.beta2],
       weight_decay=cfg.weight_decay,
-      update_steps=update_steps,
+      update_steps=cfg.steps_budget,
       adam_to_sgd_ratio=cfg.adam_to_sgd_ratio,
       do_bias_correction=cfg.do_bias_correction,
     )
