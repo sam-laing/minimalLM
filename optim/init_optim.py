@@ -29,6 +29,16 @@ def intialize_optimizer(param_groups, cfg):
       decoupled_weight_decay=True,
       fused=cfg.fused_optim, 
     )
+  elif cfg.optim == "custom_adamw":
+    from .custom_adamw import CustomAdamW
+    optimizer = CustomAdamW(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      weight_decay=cfg.weight_decay,
+      eps=cfg.eps,
+      do_bias_correction=cfg.do_bias_correction,
+    )
   
   elif cfg.optim == 'sgd':
     optimizer = torch.optim.SGD(
@@ -125,8 +135,6 @@ def intialize_optimizer(param_groups, cfg):
     micro_batch_size: 32
     grad_accumulation_steps: 8
     """
-
-
     optimizer = Adam2SGD(
       param_groups,
       lr=cfg.lr,
@@ -169,7 +177,16 @@ def initalize_scheduler(optimizer, cfg):
       warmup_steps=warmup_steps,
       T=cfg.steps_budget,
     )
-
+    if cfg.optimizer == "adam2sgd":
+      from optim.lr_schedule import WarmupCosineAdam2SGD
+      scheduler = WarmupCosineAdam2SGD(
+        optimizer,
+        lr_start=cfg.lr_start,
+        lr_max=cfg.lr,
+        lr_end=lr_end,
+        warmup_steps=warmup_steps,
+        T=cfg.steps_budget,
+      )
   elif cfg.scheduler == "wsd":
     # Number of cooldown steps
     # either specified as a number (int) or as a percentage of steps_budget (float)
