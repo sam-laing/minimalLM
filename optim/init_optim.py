@@ -177,7 +177,7 @@ def initalize_scheduler(optimizer, cfg):
       warmup_steps=warmup_steps,
       T=cfg.steps_budget,
     )
-    if cfg.optimizer == "adam2sgd":
+    if cfg.optim == "adam2sgd":
       from optim.lr_schedule import WarmupCosineAdam2SGD
       scheduler = WarmupCosineAdam2SGD(
         optimizer,
