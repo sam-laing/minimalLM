@@ -3,6 +3,9 @@
 from absl import app, flags
 from collections import defaultdict
 
+import wandb
+import json
+
 import utils
 from utils import print_master
 from torch_utils import pytorch_setup, destroy_ddp
@@ -10,6 +13,7 @@ from data import get_dataloaders
 from checkpoint_utils import save_checkpoint, maybe_load_checkpoint
 from models import construct_model
 from engine import TorchEngine
+import math
 
 flags.DEFINE_string('config', 'config/config.yaml', 'Path to config.yaml file.')
 flags.DEFINE_integer('job_idx', None, 'Job idx for job-array sweeps. From 0 to n-1.')
@@ -57,7 +61,7 @@ def main(_):
 
     # Eval
     valid_loss = None
-    if cfg.eval and step % cfg.eval_every_steps == 0:
+    if cfg.eval and step % cfg.eval_every_steps == 0 and step > 100:
       print_master("Evaluating on validation set")
       valid_loss = engine.eval(validloader)
     
@@ -72,6 +76,19 @@ def main(_):
         and micro_step % cfg.save_every_steps == 0:
       save_checkpoint(micro_step-1, model, engine, cfg, JOB_IDX)
 
+  if cfg.eval and getattr(cfg, "eval_final", False):
+    print_master("Evaluating on validation set")
+    valid_loss = engine.eval(validloader)
+    print(f"Final validation loss: {valid_loss:.3e}")
+    print(f"Final validation PPL: {math.exp(valid_loss):.3e}")
+
+
+
+
+    if master_process:
+      utils.log_final_val_summary(cfg, valid_loss)
+      utils.log_final_train_summary(cfg, train_loss)
+
   # End of training: log and save checkpoint
   print_master(f"=== Training Completed! ===")
   if master_process and cfg.save_last_checkpoint:
@@ -79,6 +96,10 @@ def main(_):
 
   # DDP slaughtering
   destroy_ddp()
+
+  if cfg.use_wandb:
+    wandb.finish()
+    print_master("WandB finished")
 
 
 if __name__ == "__main__":

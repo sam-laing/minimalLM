@@ -8,9 +8,6 @@ from torch.utils.data import DataLoader, SequentialSampler, RandomSampler
 
 from data.datasamplers import StatefulSequentialSampler, StatefulDistributedSampler
 
-# TODO: add seed to DistributedSampler
-# TODO: improve readibility of _get_sampler
-
 
 def get_dataloaders(cfg, start_step: int = 0):
   """Load trainset and perhaos validset. Returns correspondent DataLoaders."""
@@ -31,7 +28,7 @@ def get_dataloaders(cfg, start_step: int = 0):
     prefetch_factor = 2 if cfg.num_workers > 0 else None,
     persistent_workers = True if cfg.num_workers > 0 else False,
   )
-  
+
   if not cfg.validset_path:
     validloader = None
   else:
@@ -63,21 +60,25 @@ def _get_sampler(train_set, cfg, start_step):
   """  
   ddp = dist.is_initialized()
   
+  # Determine which seed to use
+  seed_to_use = cfg.seed if cfg.one_seeded else cfg.sampler_seed
+  
   if cfg.resume:
     if ddp:
-      sampler = StatefulDistributedSampler(train_set, batch_size=cfg.micro_batch_size, seed=cfg.sampler_seed)
+      sampler = StatefulDistributedSampler(train_set, batch_size=cfg.micro_batch_size, seed=seed_to_use)
       sampler.set_start_iter(start_step)
     else:
-      sampler = StatefulSequentialSampler(train_set, batch_size=cfg.micro_batch_size, start_idx=start_step, seed=cfg.sampler_seed)
+      sampler = StatefulSequentialSampler(train_set, batch_size=cfg.micro_batch_size, start_idx=start_step, seed=seed_to_use)
   else:
     if ddp:
-      sampler = DistributedSampler(train_set, drop_last=True)
+      # For non-resumed DDP, also use the unified seed if one_seeded
+      sampler = DistributedSampler(train_set, drop_last=True, seed=seed_to_use if seed_to_use is not None else 0)
     else:
       sampler = SequentialSampler(train_set)  # equivalent to StatefulSequentialSampler(..., start_idx=0)
   
-  if cfg.sampler == 'random' and cfg.sampler_seed is not None and not ddp:
-    generator = torch.Generator().manual_seed(cfg.sampler_seed)
+  if cfg.sampler == 'random' and not ddp:
+    # For random sampling, use the same unified seed approach
+    generator = torch.Generator().manual_seed(seed_to_use)
     sampler = RandomSampler(train_set, generator=generator)
   
   return sampler
-  

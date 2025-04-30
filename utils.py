@@ -5,11 +5,19 @@ import math
 import shutil
 import wandb
 import torch
+import time
 
 from itertools import product
 from collections import namedtuple
 
-
+def print_master(msg):
+  """Prints only in master process if using multiple GPUs."""
+  rank = os.environ.get('RANK', -1)
+  ddp = int(rank) != -1
+  master_process = (not ddp) or (int(rank) == 0)
+  
+  if master_process:
+    print(msg)
 
 
 def load_config(path, job_idx=None):
@@ -46,15 +54,33 @@ def init_wandb(cfg):
   #os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
-  wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}"
+  wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+  if cfg.optim == "custom_adamw":
+    wandb_run_name += f", bias_c={cfg.do_bias_correction}"
   if cfg.optim == "adam2sgd":
     wandb_run_name += f", a2s={cfg.adam_to_sgd_ratio}"
   wandb.init(
     project=cfg.wandb_project, 
     name=wandb_run_name, 
     dir=cfg.wandb_dir,
-    config=cfg._asdict()
+    config=cfg._asdict(), 
+    tags = [
+      cfg.optim, 
+      f"lr={cfg.lr}",
+      f"wd={cfg.weight_decay}",
+      f"b1={cfg.beta1}",
+      f"b2={cfg.beta2}",
+      f"eps={cfg.eps}",
+      f"bs={cfg.micro_batch_size * cfg.grad_accumulation_steps}",
+      f"seq_len={cfg.seq_len}",
+      f"steps_budget={cfg.steps_budget}",
+      f"scheduler={cfg.scheduler}",
+      f"warmup_steps={cfg.warmup_steps}",
+      f"do_bias_correction={cfg.do_bias_correction}",
+      f"seed={cfg.seed}"
+    ]
   )
+
 
 
 def maybe_make_dir(cfg, job_idx=None):
@@ -64,21 +90,22 @@ def maybe_make_dir(cfg, job_idx=None):
   if cfg.resume and cfg.resume_exp_name is None:  # if resuming from the same exp
     return
   
-  exp_name = f"{cfg.optim}, lr={cfg.lr}, eps={cfg.eps}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}"
-  exp_dir = os.path.join(cfg.out_dir, exp_name)
+  # Use cfg.exp_name instead of generating a dynamic name
+  exp_dir = os.path.join(cfg.out_dir, cfg.exp_name)
   if job_idx is not None:  # subfolder for each job in the sweep
     exp_dir = os.path.join(exp_dir, f"job_idx_{job_idx}")
 
   if os.path.exists(exp_dir):
     if not cfg.over_write:
-      raise ValueError(f"Found existing exp_dir at {exp_dir}.")
+      raise ValueError(f"Experiment dir: {exp_dir} already exists and over_write=False")
     print(f"Removing experiment dir: {exp_dir}")
-    shutil.rmtree(exp_dir)
+    shutil.rmtree(exp_dir)  # Add import for shutil at the top of the file
 
   print(f"Creating experiment directory: {exp_dir}")
   os.makedirs(exp_dir, exist_ok=True)
   with open(os.path.join(exp_dir, 'config.yaml'), 'w') as file:
-    yaml.dump(cfg._asdict(), file, default_flow_style=False)
+    yaml.dump(cfg._asdict(), file)  # Add import for yaml at the top of the file
+
 
 
 def log(cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_size):
@@ -114,12 +141,65 @@ def log(cfg, metrics, micro_step, train_losses, valid_loss, optimizer, world_siz
   if cfg.use_wandb:
     wandb.log(new_metrics)
 
-
-def print_master(msg):
-  """Prints only in master process if using multiple GPUs."""
-  rank = os.environ.get('RANK', -1)
-  ddp = int(rank) != -1
-  master_process = (not ddp) or (int(rank) == 0)
+"""   
+def log_final_val_summary(cfg, val_loss):
+  #Logs final validation loss summary
+  if not cfg.use_wandb:
+    return
   
-  if master_process:
-    print(msg)
+  ppl = math.exp(val_loss)
+
+  wandb.run.summary["final_validation_loss"] = val_loss
+  wandb.run.summary["final_validation_ppl"] = ppl
+
+  wandb.run.summary.update(
+    {
+      "final_validation_loss": val_loss,
+      "final_validation_ppl": ppl,
+    }
+  )
+
+  print_master(f"Final validation loss: {val_loss:.3e} | Final validation PPL: {ppl:.3e}")
+
+"""   
+def log_final_val_summary(cfg, val_loss):
+    """Logs final validation loss summary"""
+    if not cfg.use_wandb:
+        print_master("Wandb not enabled, skipping final validation summary")
+        return
+    
+    try:
+        ppl = math.exp(val_loss)
+        
+        # This is the key change - add a metric specifically for bar charts
+        # Use a flat key with no slashes, prefixed with "bar_"
+        wandb.run.summary["bar_val_ppl"] = ppl
+        wandb.run.summary["bar_val_loss"] = val_loss
+        
+        # Keep existing logging
+        wandb.run.summary["final_validation_loss"] = val_loss
+        wandb.run.summary["final_validation_ppl"] = ppl
+        wandb.log({"final/validation_loss": val_loss, "final/validation_ppl": ppl})
+        
+        print_master(f"Logging final val metrics: loss={val_loss:.3e}, ppl={ppl:.3e}")
+        print_master("Successfully logged final validation summary")
+    except Exception as e:
+        print_master(f"ERROR logging final validation summary: {str(e)}")
+
+def log_final_train_summary(cfg, train_loss):
+  """Logs final training loss summary"""
+  if not cfg.use_wandb:
+    return
+  
+  ppl = math.exp(train_loss)
+
+  wandb.run.summary["final_training_loss"] = train_loss
+  wandb.run.summary["final_training_ppl"] = ppl
+
+  print_master(f"Final training loss: {train_loss:.3e} | Final training PPL: {ppl:.3e}")
+
+
+
+
+
+

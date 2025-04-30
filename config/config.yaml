@@ -2,8 +2,9 @@
 ## change paths with your own!
 
 deterministic: True
-seed: 100
-sampler_seed: 100
+seed: [400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414] 
+sampler_seed: 66
+one_seeded: true
 
 trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
 vocab_size: 50280
@@ -14,7 +15,8 @@ num_workers: 4
 
 eval: True
 validset_path: "/fast/slaing/data/lm/slim_pajama/new_valid/validation" 
-eval_every_steps: 1000
+eval_every_steps: 99999999999
+eval_final: True
 
 model: 'transformer'
 d_model: 768
@@ -39,22 +41,22 @@ grad_accumulation_steps: 8
 # note: float16 data type will automatically use a GradScaler
 dtype: 'bfloat16'
 
-optim: "adam2sgd"
+optim: "custom_adamw"
 fused_optim: False 
 lr: 3.e-3
 weight_decay: 0.1
-beta1: 0.9
+beta1: 0.91
 beta2: 0.97
 dampening: 0.1
 eps: 1.e-8
 grad_clip: 1.0
-do_bias_correction: False
-adam_to_sgd_ratio: [0.85, 0.9, 0.95, 1.0]
+do_bias_correction: [true, false]
+adam_to_sgd_ratio: 1.0
 
-scheduler: 'warmup_cosine'
+scheduler: null
 warmup_steps: 0.1
 cooldown_steps: null
-lr_start: 0.0
+lr_start: 1.e-6
 lr_end: 1.e-5
 lr_end_pct: null
 
@@ -62,9 +64,9 @@ log_every_steps: 1
 print_progress: True
 
 use_wandb: True
-wandb_project: 'llm'
+wandb_project: 'llm_bias_correction'
 wandb_dir: '/fast/slaing/logs/llm/wandb'
-wandb_run_name: "tr_check_not_fused" 
+wandb_run_name: "bias_correction_test" 
 exp_name: 'tr_check_not_fused'
 out_dir: '/fast/slaing/exp/llm'
 wandb_api_key: "0b4cb5f85aad923fbaec987675544b3d4530b0e4"
