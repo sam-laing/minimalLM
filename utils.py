@@ -54,9 +54,9 @@ def init_wandb(cfg):
   #os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
-  wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+  wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
   if cfg.optim == "custom_adamw":
-    wandb_run_name += f", bias_c={cfg.do_bias_correction}"
+    wandb_run_name += f", bias_c={cfg.do_bias_correction}, zero_init={cfg.zero_init}"
   if cfg.optim == "adam2sgd":
     wandb_run_name += f", a2s={cfg.adam_to_sgd_ratio}"
   wandb.init(
@@ -65,19 +65,31 @@ def init_wandb(cfg):
     dir=cfg.wandb_dir,
     config=cfg._asdict(), 
     tags = [
-      cfg.optim, 
+      f"optim={cfg.optim}"
       f"lr={cfg.lr}",
       f"wd={cfg.weight_decay}",
       f"b1={cfg.beta1}",
       f"b2={cfg.beta2}",
+      f"grad_clip={cfg.grad_clip}",
       f"eps={cfg.eps}",
       f"bs={cfg.micro_batch_size * cfg.grad_accumulation_steps}",
       f"seq_len={cfg.seq_len}",
       f"steps_budget={cfg.steps_budget}",
+      f"micro_batch_size={cfg.micro_batch_size}",
+      f"grad_accumulation_steps={cfg.grad_accumulation_steps}",
       f"scheduler={cfg.scheduler}",
       f"warmup_steps={cfg.warmup_steps}",
       f"do_bias_correction={cfg.do_bias_correction}",
-      f"seed={cfg.seed}"
+      f"zero_init={cfg.zero_init}",
+      f"seed={cfg.seed}", 
+      f"lr_end={cfg.lr_end}",
+      f"lr_start={cfg.lr_start}",
+      f"warmup_steps={cfg.warmup_steps}",
+      f"d_model={cfg.d_model}",
+      f"n_layers={cfg.n_layers}",
+      f"n_heads={cfg.n_heads}",
+      f"expand={cfg}"
+
     ]
   )
 

@@ -21,6 +21,7 @@ class CustomAdamW(Optimizer):
         eps: float = 1e-8,
         betas: Betas2 = (0.9, 0.99),
         do_bias_correction: bool = False,
+        zero_init: bool = False,
         weight_decay: float = 0.0,
     ):
         if lr <= 0.0:
@@ -38,6 +39,7 @@ class CustomAdamW(Optimizer):
             weight_decay=weight_decay,
             eps=eps,
             do_bias_correction=do_bias_correction,
+            zero_init=zero_init,
         )
         super().__init__(params, defaults)
 
@@ -64,7 +66,7 @@ class CustomAdamW(Optimizer):
                 # State initialization
                 if len(state) == 0:
                     state["step"] = 0
-                    if group["do_bias_correction"]:
+                    if group["zero_init"]:
                         state["exp_avg"] = torch.zeros_like(p)
                         state["exp_avg_sq"] = torch.zeros_like(p)
                     else:
@@ -95,3 +97,4 @@ class CustomAdamW(Optimizer):
                 p.data.addcdiv_(exp_avg_corrected, denom, value=-group["lr"])
 
         return loss
+    

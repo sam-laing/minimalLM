@@ -2,7 +2,7 @@
 ## change paths with your own!
 
 deterministic: True
-seed: [400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414] 
+seed: [900, 901, 902, 903, 904] # , 205, 206, 207, 208, 209, 210, 211, 212, 213, 214]
 sampler_seed: 66
 one_seeded: true
 
@@ -51,13 +51,14 @@ dampening: 0.1
 eps: 1.e-8
 grad_clip: 1.0
 do_bias_correction: [true, false]
+zero_init: [true, false] #whether to initialise the moments to zero (true) or to g, g^2 (false)
 adam_to_sgd_ratio: 1.0
 
-scheduler: null
+scheduler: "warmup_cosine"
 warmup_steps: 0.1
 cooldown_steps: null
 lr_start: 1.e-6
-lr_end: 1.e-5
+lr_end: 1.e-6
 lr_end_pct: null
 
 log_every_steps: 1
