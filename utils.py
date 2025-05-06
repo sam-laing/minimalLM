@@ -88,7 +88,7 @@ def init_wandb(cfg):
       f"d_model={cfg.d_model}",
       f"n_layers={cfg.n_layers}",
       f"n_heads={cfg.n_heads}",
-      f"expand={cfg}"
+      f"expand={cfg.expand}",
 
     ]
   )

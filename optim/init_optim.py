@@ -38,6 +38,7 @@ def intialize_optimizer(param_groups, cfg):
       weight_decay=cfg.weight_decay,
       eps=cfg.eps,
       do_bias_correction=cfg.do_bias_correction,
+      zero_init=cfg.zero_init,
     )
   
   elif cfg.optim == 'sgd':
