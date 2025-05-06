@@ -2,7 +2,7 @@
 ## change paths with your own!
 
 deterministic: True
-seed: [335,336,337,338] 
+seed: [250, 251, 252, 253, 254]   #[335,336,337,338] 
 one_seeded: true
 
 trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
@@ -42,7 +42,7 @@ dtype: 'bfloat16'
 
 optim: "custom_adamw"
 fused_optim: False 
-lr: 3.e-3
+lr: 0.008     #3.e-3
 weight_decay: 0.1
 beta1: 0.95
 beta2: 0.95
@@ -54,7 +54,7 @@ zero_init: [true, false] #whether to initialise the moments to zero (true) or to
 adam_to_sgd_ratio: 1.0
 
 scheduler: "warmup_cosine"
-warmup_steps: 0.075
+warmup_steps: 0.1
 cooldown_steps: null
 lr_start: 1.e-6
 lr_end: 1.e-6
