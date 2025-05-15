@@ -12,6 +12,10 @@ class CustomAdamW(Optimizer):
     """
     A modified version of AdamW optimizer with an option
     to disable bias correction and initialize moments directly with gradients.
+
+
+    - zero_init: bool, if True exp_avg and exp_avg_sq are initialized as zero and if False with g1, g1^2
+    - do_bias_correction: bool, if True bias correction is applied (i.e \hat{m_t} = mt / (1-beta1^t)), else not applied (\hat{m}_t = m_t)
     """
 
     def __init__(
@@ -57,13 +61,12 @@ class CustomAdamW(Optimizer):
                 if grad.is_sparse:
                     raise RuntimeError("Sparse gradients are not supported.")
 
-                # Apply weight decay (decoupled as in AdamW)
+                #apply weight decay (decoupled as in AdamW)
                 if group["weight_decay"] != 0:
                     p.data.mul_(1 - group["lr"] * group["weight_decay"])
 
                 state = self.state[p]
-
-                # State initialization
+                #init state
                 if len(state) == 0:
                     state["step"] = 0
                     if group["zero_init"]:
@@ -78,11 +81,11 @@ class CustomAdamW(Optimizer):
                 beta1, beta2 = group["betas"]
                 state["step"] += 1
 
-                # Update moving averages
+                #update ema with current gradient
                 exp_avg.mul_(beta1).add_(grad, alpha=1 - beta1)
                 exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
 
-                # Compute bias-corrected terms if needed
+                #optional bias correction addition
                 if group["do_bias_correction"]:
                     bias_correction1 = 1 - beta1 ** state["step"]
                     bias_correction2 = 1 - beta2 ** state["step"]
@@ -92,7 +95,7 @@ class CustomAdamW(Optimizer):
                     exp_avg_corrected = exp_avg
                     exp_avg_sq_corrected = exp_avg_sq
 
-                # Parameter update
+                #finally update the parameters
                 denom = exp_avg_sq_corrected.sqrt().add_(group["eps"])
                 p.data.addcdiv_(exp_avg_corrected, denom, value=-group["lr"])
 
