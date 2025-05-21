@@ -40,3 +40,5 @@ llm_pretrain/logs/
 # ignore all but config.yaml yaml files
 !**/config.yaml
 *.yaml
+
+check.py
