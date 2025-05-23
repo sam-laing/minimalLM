@@ -32,8 +32,9 @@ class NestedMA(Optimizer):
         params: Params,
         lr: float = 1e-4,
         eps: float = 1e-8,
-        betas: Betas2 = (0.9, 0.99),
+        betas: Betas2 = (0.9, 0.999),
         do_bias_correction: bool = False,
+        zero_init: bool = True,
         weight_decay: float = 0.0,
     ):
         if lr <= 0.0:
@@ -50,7 +51,9 @@ class NestedMA(Optimizer):
             raise ValueError(
                 "Invalid weight_decay value: {}".format(weight_decay)
             )
-        defaults = dict(lr=lr, betas=betas, weight_decay=weight_decay, eps=eps, do_bias_correction=do_bias_correction)
+        defaults = dict(
+            lr=lr, betas=betas, weight_decay=weight_decay, eps=eps, 
+            do_bias_correction=do_bias_correction, zero_init=zero_init)
         super().__init__(params, defaults)
     
     # not needed
@@ -93,7 +96,7 @@ class NestedMA(Optimizer):
                 # State initialization
                 if len(state) == 0:
                     state["step"] = 0
-                    if group["do_bias_correction"]:
+                    if group["zero_init"]:
                         state["exp_avg_sq"] = torch.zeros_like(p, memory_format=torch.preserve_format)
                         state["nested_exp_ma"] = torch.zeros_like(p, memory_format=torch.preserve_format)
                     else:
