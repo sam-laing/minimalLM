@@ -5,7 +5,7 @@ LOGS_DIR=/home/slaing/minimalLM/llm_pretrain/logs
 executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
 
 # Job specific vars
-config=/home/slaing/minimalLM/config/config.yaml
+config=/home/slaing/minimalLM/config/eps_ablation_cfg.yaml
 n_jobs=16
 
 # Args
@@ -23,3 +23,4 @@ request_gpus = 1
 requirements = (TARGET.CUDADeviceName == "NVIDIA A100-SXM4-80GB")
 
 queue $(n_jobs)
+

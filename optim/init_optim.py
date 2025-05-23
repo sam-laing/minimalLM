@@ -31,6 +31,7 @@ def intialize_optimizer(param_groups, cfg):
     )
   elif cfg.optim == "custom_adamw":
     from .custom_adamw import CustomAdamW
+
     optimizer = CustomAdamW(
       param_groups,
       lr=cfg.lr,
@@ -39,6 +40,7 @@ def intialize_optimizer(param_groups, cfg):
       eps=cfg.eps,
       do_bias_correction=cfg.do_bias_correction,
       zero_init=cfg.zero_init,
+      eps_inside_sqrt=cfg.eps_inside_sqrt,
     )
   
   elif cfg.optim == 'sgd':
@@ -85,7 +87,8 @@ def intialize_optimizer(param_groups, cfg):
       betas=[cfg.beta1, cfg.beta2],
       weight_decay=cfg.weight_decay, 
       eps=cfg.eps,
-      do_bias_correction=False
+      do_bias_correction=False, 
+      zero_init = True,
     )
     
   elif cfg.optim == "muon":

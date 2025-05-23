@@ -27,6 +27,7 @@ class CustomAdamW(Optimizer):
         do_bias_correction: bool = False,
         zero_init: bool = False,
         weight_decay: float = 0.0,
+        eps_inside_sqrt: bool = False
     ):
         if lr <= 0.0:
             raise ValueError(f"Invalid learning rate: {lr}")
@@ -44,6 +45,7 @@ class CustomAdamW(Optimizer):
             eps=eps,
             do_bias_correction=do_bias_correction,
             zero_init=zero_init,
+            eps_inside_sqrt=eps_inside_sqrt,
         )
         super().__init__(params, defaults)
 
@@ -96,7 +98,12 @@ class CustomAdamW(Optimizer):
                     exp_avg_sq_corrected = exp_avg_sq
 
                 #finally update the parameters
-                denom = exp_avg_sq_corrected.sqrt().add_(group["eps"])
+                if group["eps_inside_sqrt"]:
+                    # add eps to exp_avg_sq before taking the square root
+                    denom = exp_avg_sq.add_(group["eps"]).sqrt()
+                else:
+                    denom = exp_avg_sq_corrected.sqrt().add_(group["eps"])
+
                 p.data.addcdiv_(exp_avg_corrected, denom, value=-group["lr"])
 
         return loss

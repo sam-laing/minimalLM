@@ -19,6 +19,18 @@ def print_master(msg):
   if master_process:
     print(msg)
 
+# Add to utils.py
+def get_paired_betas(cfg, job_idx=None):
+    """Extract beta pairs from config based on job index"""
+    if hasattr(cfg, 'beta_pairs'):
+        if job_idx is None:
+            return cfg.beta_pairs[0]  #default to first pair
+        pair_idx = job_idx % len(cfg.beta_pairs)
+        return cfg.beta_pairs[pair_idx]
+    else:
+        #fallback to original betas
+        return cfg.beta1, cfg.beta2
+
 
 def load_config(path, job_idx=None):
   """
@@ -45,8 +57,12 @@ def load_config(path, job_idx=None):
 
     combination = combinations[job_idx]
     cfg = {keys[i]: combination[i] for i in range(len(keys))}
+
+  cfg_obj = Config(**cfg)
+
+
   
-  return Config(**cfg), sweep_size
+  return cfg_obj, sweep_size
 
 
 def init_wandb(cfg):
@@ -54,7 +70,9 @@ def init_wandb(cfg):
   #os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
-  wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+  #wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+
+  wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, eps = {cfg.eps}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
   if cfg.optim == "custom_adamw":
     wandb_run_name += f", bias_c={cfg.do_bias_correction}, zero_init={cfg.zero_init}"
   if cfg.optim == "adam2sgd":

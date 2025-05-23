@@ -2,7 +2,7 @@
 ## change paths with your own!
 
 deterministic: True
-seed: [250, 251, 252, 253, 254]   #[335,336,337,338] 
+seed: [9999, 10000]  
 one_seeded: true
 
 trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
@@ -29,7 +29,7 @@ torch_compile: True
 
 # note: set one of these two
 # note: step budget=token_budget/(seq_len * micro_batch_size * grad_accumulation_steps)
-steps_budget: 6200
+steps_budget: 4800
 
 # note: this is micro batch size if grad_accumulation_steps>1
 # note: with ddp, effective batch size = batch_size * grad_accumulation_steps * ddp_world_size
@@ -42,18 +42,19 @@ dtype: 'bfloat16'
 
 optim: "custom_adamw"
 fused_optim: False 
-lr: 0.008     #3.e-3
+lr: 0.0025     
 weight_decay: 0.1
-beta1: 0.95
-beta2: 0.95
+beta1: [0.9, 0.95]
+beta2: [0.95, 0.999]
 dampening: 0.1
 eps: 1.e-8
 grad_clip: 1.0
 do_bias_correction: [true, false]
-zero_init: [true, false] #whether to initialise the moments to zero (true) or to g, g^2 (false)
+zero_init: [true] #whether to initialise the moments to zero (true) or to g, g^2 (false)
+eps_inside_sqrt: false
 adam_to_sgd_ratio: 1.0
 
-scheduler: "warmup_cosine"
+scheduler: [null]
 warmup_steps: 0.1
 cooldown_steps: null
 lr_start: 1.e-6
