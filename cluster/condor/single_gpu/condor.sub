@@ -6,7 +6,7 @@ executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
 
 # Job specific vars
 config=/home/slaing/minimalLM/config/config.yaml
-n_jobs=16
+n_jobs=6
 
 # Args
 arguments = $(config) $(Process)

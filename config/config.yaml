@@ -2,7 +2,7 @@
 ## change paths with your own!
 
 deterministic: True
-seed: [9999, 10000]  
+seed: [9996, 9997, 9998]  
 one_seeded: true
 
 trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
@@ -44,8 +44,8 @@ optim: "custom_adamw"
 fused_optim: False 
 lr: 0.0025     
 weight_decay: 0.1
-beta1: [0.9, 0.95]
-beta2: [0.95, 0.999]
+beta1: [0.95]
+beta2: [0.95]
 dampening: 0.1
 eps: 1.e-8
 grad_clip: 1.0
