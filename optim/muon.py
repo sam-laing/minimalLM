@@ -62,7 +62,7 @@ class Muon(torch.optim.Optimizer):
 
     def __init__(
         self,
-        lr=1e-3,
+        lr=0.02,
         weight_decay=0.1,
         muon_params=None,
         momentum=0.95,
