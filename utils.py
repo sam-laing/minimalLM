@@ -77,6 +77,8 @@ def init_wandb(cfg):
     wandb_run_name += f", bias_c={cfg.do_bias_correction}, zero_init={cfg.zero_init}"
   if cfg.optim == "adam2sgd":
     wandb_run_name += f", a2s={cfg.adam_to_sgd_ratio}"
+  if cfg.optim == "nestingMA":
+    wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
   wandb.init(
     project=cfg.wandb_project, 
     name=wandb_run_name, 
@@ -107,7 +109,6 @@ def init_wandb(cfg):
       f"n_layers={cfg.n_layers}",
       f"n_heads={cfg.n_heads}",
       f"expand={cfg.expand}",
-
     ]
   )
 
