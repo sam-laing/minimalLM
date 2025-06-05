@@ -89,13 +89,33 @@ def intialize_optimizer(param_groups, cfg):
     )
     
   elif cfg.optim == "muon":
-    from .muon import Muon  
+    from .muon import Muon 
+    #import from ../models/construct the model
+    from models.construct import construct_model
+    model, model_cfg = construct_model(cfg)
+     
+    muon_params = [
+        p
+        for name, p in model.named_parameters()
+        if p.ndim >= 2 and "embed_tokens" not in name and "lm_head" not in name
+    ]
+    adamw_params = [
+        p
+        for name, p in model.named_parameters()
+        if not (
+            p.ndim >= 2 and "embed_tokens" not in name and "lm_head" not in name
+        )
+    ]
     optimizer = Muon(
-      param_groups,
-      lr=cfg.lr,
-      momentum=cfg.beta1,
+      lr = cfg.lr,
+      weight_decay= cfg.weight_decay, 
+      muon_params=muon_params,
+      momentum=cfg.momentum,
       nesterov=cfg.nesterov,
-      ns_steps=cfg.ns_steps
+      ns_steps=cfg.ns_steps,
+      adamw_params=adamw_params,
+      adamw_betas=[cfg.beta1, cfg.beta2],
+      adamw_eps=cfg.eps,
     )
 
   elif cfg.optim == "lion":
