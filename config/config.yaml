@@ -54,7 +54,7 @@ zero_init: [true] #whether to initialise the moments to zero (true) or to g, g^2
 eps_inside_sqrt: false
 adam_to_sgd_ratio: 1.0
 
-scheduler: [null]
+scheduler: ["warmup_cosine"]
 warmup_steps: 0.1
 cooldown_steps: null
 lr_start: 1.e-6
