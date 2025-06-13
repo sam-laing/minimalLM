@@ -15,7 +15,7 @@ from models import construct_model
 from engine import TorchEngine
 import math
 
-flags.DEFINE_string('config', 'config/config.yaml', 'Path to config.yaml file.')
+flags.DEFINE_string('config', 'config/debug_config.yaml', 'Path to config.yaml file.')
 flags.DEFINE_integer('job_idx', None, 'Job idx for job-array sweeps. From 0 to n-1.')
 FLAGS = flags.FLAGS
 

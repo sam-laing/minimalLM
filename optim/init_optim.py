@@ -129,6 +129,25 @@ def intialize_optimizer(param_groups, cfg):
       weight_decay=cfg.weight_decay, 
       eps=cfg.eps
     )
+
+  elif cfg.optim == "adamw_grad_track":
+    from .adamw_grad_track import TrackingAdamW
+    from models.construct import construct_model
+
+    model, model_cfg = construct_model(cfg)
+    
+    optimizer = TrackingAdamW(
+      param_groups,
+      lr=cfg.lr,
+      betas=[cfg.beta1, cfg.beta2],
+      weight_decay=cfg.weight_decay,
+      eps=cfg.eps,
+      do_bias_correction=cfg.do_bias_correction,
+      zero_init=cfg.zero_init,
+      eps_inside_sqrt=cfg.eps_inside_sqrt,
+      model = model
+    )
+  
   elif cfg.optim == "adam2sgd":
     from .adam2sgd import Adam2SGD
     """    
