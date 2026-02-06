@@ -72,9 +72,11 @@ def init_wandb(cfg):
   os.environ["WANDB_SILENT"] = "true"
   #wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
 
-  wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, eps = {cfg.eps}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+  wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, , lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, bs ={cfg.micro_batch_size * cfg.grad_accumulation_steps}"
+  if cfg.optim == "muon":
+    wandb_run_name += f", sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}, dual_decay={getattr(cfg, 'dual_decay', 'N/A')}, nes={getattr(cfg, 'nesterov', 'N/A')}, mom={getattr(cfg, 'momentum', 'N/A')}"
   if cfg.optim == "custom_adamw":
-    wandb_run_name += f", bias_c={cfg.do_bias_correction}, zero_init={cfg.zero_init}"
+    wandb_run_name += f", bias_c={getattr(cfg, 'do_bias_correction', 'N/A')}, zero_init={getattr(cfg, 'zero_init', 'N/A')}"
   if cfg.optim == "adam2sgd":
     wandb_run_name += f", a2s={cfg.adam_to_sgd_ratio}"
   if cfg.optim == "nestingMA":
@@ -90,6 +92,7 @@ def init_wandb(cfg):
       f"wd={cfg.weight_decay}",
       f"b1={cfg.beta1}",
       f"b2={cfg.beta2}",
+      f"mom={getattr(cfg, 'momentum', 'N/A')}",
       f"grad_clip={cfg.grad_clip}",
       f"eps={cfg.eps}",
       f"bs={cfg.micro_batch_size * cfg.grad_accumulation_steps}",
@@ -99,8 +102,10 @@ def init_wandb(cfg):
       f"grad_accumulation_steps={cfg.grad_accumulation_steps}",
       f"scheduler={cfg.scheduler}",
       f"warmup_steps={cfg.warmup_steps}",
-      f"do_bias_correction={cfg.do_bias_correction}",
-      f"zero_init={cfg.zero_init}",
+      f"sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}",
+      f"dual_decay={getattr(cfg, 'dual_decay', 'N/A')}",
+      f"do_bias_correction={getattr(cfg, 'do_bias_correction', 'N/A')}",
+      f"zero_init={getattr(cfg, 'zero_init', 'N/A')}",
       f"seed={cfg.seed}", 
       f"lr_end={cfg.lr_end}",
       f"lr_start={cfg.lr_start}",
@@ -109,6 +114,7 @@ def init_wandb(cfg):
       f"n_layers={cfg.n_layers}",
       f"n_heads={cfg.n_heads}",
       f"expand={cfg.expand}",
+      f"equal_betas={getattr(cfg, 'equal_betas', 'N/A')}"
     ]
   )
 

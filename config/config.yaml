@@ -42,7 +42,7 @@ dtype: 'bfloat16'
 
 optim: "custom_adamw"
 fused_optim: False 
-lr: 0.0025     
+lr: 0.008     
 weight_decay: 0.1
 beta1: [0.95]
 beta2: [0.95]

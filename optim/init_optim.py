@@ -11,10 +11,11 @@ def intialize_optimizer(param_groups, cfg):
   """
   
   if cfg.optim == 'adamw':
+    adam_betas = (cfg.beta1, cfg.beta2) if not getattr(cfg, 'equal_betas', False) else (cfg.beta1, cfg.beta1)
     optimizer = torch.optim.AdamW(
       param_groups,
       lr=cfg.lr,
-      betas=[cfg.beta1, cfg.beta2],
+      betas=adam_betas,
       eps=cfg.eps,
       weight_decay=cfg.weight_decay,
       fused=cfg.fused_optim, 
@@ -31,16 +32,16 @@ def intialize_optimizer(param_groups, cfg):
     )
   elif cfg.optim == "custom_adamw":
     from .custom_adamw import CustomAdamW
-
+    adam_betas = (cfg.beta1, cfg.beta2) if not getattr(cfg, 'equal_betas', False) else (cfg.beta1, cfg.beta1)
     optimizer = CustomAdamW(
       param_groups,
       lr=cfg.lr,
-      betas=[cfg.beta1, cfg.beta2],
+      betas=adam_betas,
       weight_decay=cfg.weight_decay,
       eps=cfg.eps,
-      do_bias_correction=cfg.do_bias_correction,
-      zero_init=cfg.zero_init,
-      eps_inside_sqrt=cfg.eps_inside_sqrt,
+      do_bias_correction=getattr(cfg, 'do_bias_correction', True),
+      zero_init=getattr(cfg, 'zero_init', True),
+      eps_inside_sqrt=getattr(cfg, 'eps_inside_sqrt', False),
     )
   
   elif cfg.optim == 'sgd':
@@ -48,7 +49,7 @@ def intialize_optimizer(param_groups, cfg):
       param_groups,
       lr=cfg.lr,
       momentum=cfg.beta1,
-      dampening=cfg.dampening,
+      dampening=getattr(cfg, 'dampening', 0),
       weight_decay=cfg.weight_decay,
     )
   
@@ -58,7 +59,7 @@ def intialize_optimizer(param_groups, cfg):
       param_groups,
       lr=cfg.lr,
       momentum=cfg.beta1,
-      dampening=cfg.dampening,
+      dampening=getattr(cfg, 'dampening', 0),
       weight_decay=cfg.weight_decay,
     )
   
@@ -92,13 +93,22 @@ def intialize_optimizer(param_groups, cfg):
     )
     
   elif cfg.optim == "muon":
-    from .muon import Muon  
+    from .muon import Muon 
+    b1, b2 = cfg.beta1, cfg.beta2
+    if getattr(cfg, 'equal_betas', False):
+      b2 = b1 
+   
     optimizer = Muon(
       param_groups,
       lr=cfg.lr,
-      momentum=cfg.beta1,
-      nesterov=cfg.nesterov,
-      ns_steps=cfg.ns_steps
+      momentum=getattr(cfg, 'momentum', b1),
+      nesterov=getattr(cfg, 'nesterov', False),
+      ns_steps=getattr(cfg, 'ns_steps', None),
+      sep_qkv=getattr(cfg, 'sep_qkv', False),
+      dual_decay=getattr(cfg, 'dual_decay', False),
+      weight_decay=cfg.weight_decay,
+      adam_betas=(b1, b2),
+      adam_eps=cfg.eps
     )
 
   elif cfg.optim == "lion":

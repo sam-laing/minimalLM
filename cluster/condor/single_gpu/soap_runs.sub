@@ -1,12 +1,11 @@
-
 # Define variables
 # NOTE: executable should be a full path
 LOGS_DIR=/home/slaing/minimalLM/llm_pretrain/logs
 executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
 
 # Job specific vars
-config=/home/slaing/minimalLM/config/muon_config.yaml
-n_jobs=20
+config=/home/slaing/minimalLM/config/soap_config.yaml
+n_jobs=1
 
 # Args
 arguments = $(config) $(Process)
@@ -23,3 +22,4 @@ request_gpus = 1
 requirements = (TARGET.CUDADeviceName == "NVIDIA A100-SXM4-80GB")
 
 queue $(n_jobs)
+

@@ -57,6 +57,8 @@ def main(_):
 
     # Train
     train_loss = engine.step(micro_batch)
+    #adding a safeguard in case train loss explodes just break the whole script 
+
     train_losses.append(train_loss)
 
     # Eval
@@ -70,7 +72,7 @@ def main(_):
       if master_process:
         utils.log(cfg, metrics, micro_step, train_losses, valid_loss, engine.optimizer, world_size)
       train_losses = []
-    
+  
     # Checkpoint
     if master_process and cfg.save_intermediate_checkpoints \
         and micro_step % cfg.save_every_steps == 0:

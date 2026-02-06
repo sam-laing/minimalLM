@@ -112,7 +112,7 @@ class TorchEngine(torch.nn.Module):
 
     # detach for logging (scale up to undo the division above)
     loss_val = loss.detach() * self.accumulation_steps
-    if torch.isnan(loss_val):
+    if loss>1e6 or torch.isnan(loss): 
       raise ValueError("Train loss is nan")
 
     # backward pass, with gradient scaling if training in fp16
