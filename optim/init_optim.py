@@ -108,7 +108,9 @@ def intialize_optimizer(param_groups, cfg):
       dual_decay=getattr(cfg, 'dual_decay', False),
       weight_decay=cfg.weight_decay,
       adam_betas=(b1, b2),
-      adam_eps=cfg.eps
+      adam_eps=cfg.eps, 
+      last_linear_adam=getattr(cfg, 'last_linear_adam', True),
+      embedding_layer_optim=getattr(cfg, 'embedding_layer_optim', "muon"),
     )
 
   elif cfg.optim == "lion":

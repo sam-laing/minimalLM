@@ -710,7 +710,17 @@ if __name__ == "__main__":
     print(f"\nLoading {model_name}...")
     model, cfg = load_model(model_path, device)
     print(f"Config: optim={getattr(cfg, 'optim', 'N/A')}, lr={getattr(cfg, 'lr', 'N/A')}")
+
+
+    #check out the dimensions of the embedding layer 
+
     
+
+
+
+
+
+    """ 
     # Extract linear layer weights
     print("\nExtracting linear layer weights...")
     weights = get_linear_layers(model)
@@ -721,3 +731,4 @@ if __name__ == "__main__":
     sv_results, dist_results = generate_weight_report(weights, model_name, save_dir=output_dir)
     
     print("\nDone!")
+    """ 

@@ -87,10 +87,10 @@ class Muon(Optimizer):
     def __init__(
         self,
         params,
-        lr=1e-3,
-        momentum=0.95,
+        lr=1e-2,
+        momentum=0.9,
         nesterov=False,
-        ns_steps=3,
+        ns_steps=5,
         eps=1e-7,
         orthogonalize=False,
         weight_decay=0.0,
@@ -99,6 +99,8 @@ class Muon(Optimizer):
         sep_qkv=True,              
         adam_betas=(0.95, 0.95),
         adam_eps=1e-8,
+        last_linear_adam=True, 
+        embedding_layer_optim="muon", # can also have adamw or bernstein suggestion \ell_1 -> RMS operator norm: 
     ):
         """ 
         Some additional parts:
@@ -120,6 +122,8 @@ class Muon(Optimizer):
             sep_qkv=sep_qkv,         
             adam_betas=adam_betas,
             adam_eps=adam_eps,
+            last_linear_adam=last_linear_adam,
+            embedding_layer_optim=embedding_layer_optim,
         )
 
         super().__init__(params, defaults)
@@ -132,12 +136,23 @@ class Muon(Optimizer):
             all_params.extend(group["params"])
 
         last_param_id = id(all_params[-1]) if all_params else None
+        last_linear_adam = self.param_groups[0].get("last_linear_adam", True)
 
         for group in self.param_groups:
             for p in group["params"]:
                 if not p.requires_grad:
                     continue
-                if p.ndim == 2 and id(p) != last_param_id:
+                # Detect embedding parameters (nn.Embedding: 2D, usually shape (vocab_size, dim) or (num_embeddings, embedding_dim))
+                # Heuristic: if parameter is 2D and its shape[0] is much larger than shape[1], likely embedding
+                if p.ndim == 2 and (p.shape[0] > 1000 and p.shape[0] > 2 * p.shape[1]):
+                    self._optimizer_types[id(p)] = "embed"
+                elif p.ndim == 2 and id(p) == last_param_id:
+                    # Last linear layer
+                    if last_linear_adam:
+                        self._optimizer_types[id(p)] = "adam"
+                    else:
+                        self._optimizer_types[id(p)] = "muon"
+                elif p.ndim == 2:
                     self._optimizer_types[id(p)] = "muon"
                 else:
                     self._optimizer_types[id(p)] = "adam"
@@ -222,6 +237,7 @@ class Muon(Optimizer):
             p.data.add_(p.data, alpha=-weight_decay * lr)
 
         p.data.add_(update, alpha=-effective_lr)
+    
 
 
     def _adam_step(self, p, g, group, state):
@@ -253,6 +269,37 @@ class Muon(Optimizer):
         if weight_decay > 0:
             p.data.add_(p.data, alpha=-weight_decay * lr)
 
+    def _embedding_layer_step(self, p, g, group, state):
+        lr = group["lr"]
+        eps = group["eps"]
+        momentum = group["momentum"]
+        nesterov = group["nesterov"]
+        weight_decay = group["weight_decay"]
+
+        if "momentum_buffer" not in state:
+            state["momentum_buffer"] = torch.zeros_like(g)
+
+        buf = state["momentum_buffer"]
+        buf.mul_(momentum).add_(g)
+        g_eff = g.add(buf, alpha=momentum) if nesterov else buf
+
+        # steepest descent under the \ell1->RMS operator norm:
+        # normalize each column by its RMS
+        col_rms = torch.sqrt((g_eff ** 2).mean(dim=0, keepdim=True) + eps)  # (1, vocab)
+        update = g_eff / col_rms  # (embed_dim, vocab) — each col has unit RMS
+
+        # lr scaling: match Muon's adjust_lr spirit
+        # sqrt(embed_dim) keeps the effective step size consistent with weight matrices
+        if group["adjust_lr"]:
+            effective_lr = 0.2 * math.sqrt(g.size(0)) * lr
+        else:
+            effective_lr = lr
+
+        if weight_decay > 0:
+            p.data.add_(p.data, alpha=-weight_decay * lr)
+
+        p.data.add_(update, alpha=-effective_lr)
+
     @torch.no_grad()
     def step(self):
         for group in self.param_groups:
@@ -264,7 +311,9 @@ class Muon(Optimizer):
                 state = self.state[p]
                 opt_type = self._optimizer_types.get(id(p), "muon")
 
-                if opt_type == "muon":
+                if opt_type == "embed":
+                    self._embedding_layer_step(p, g, group, state)
+                elif opt_type == "muon":
                     self._muon_step(p, g, group, state)
                 else:
                     self._adam_step(p, g, group, state)

@@ -81,41 +81,50 @@ def init_wandb(cfg):
     wandb_run_name += f", a2s={cfg.adam_to_sgd_ratio}"
   if cfg.optim == "nestingMA":
     wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+
+  tags = [
+    f"optim={cfg.optim}",
+    f"lr={cfg.lr}",
+    f"wd={cfg.weight_decay}",
+    f"b1={cfg.beta1}",
+    f"b2={cfg.beta2}",
+    f"mom={getattr(cfg, 'momentum', 'N/A')}",
+    f"grad_clip={cfg.grad_clip}",
+    f"eps={cfg.eps}",
+    f"bs={cfg.micro_batch_size * cfg.grad_accumulation_steps}",
+    f"seq_len={cfg.seq_len}",
+    f"steps_budget={cfg.steps_budget}",
+    f"micro_batch_size={cfg.micro_batch_size}",
+    f"grad_accumulation_steps={cfg.grad_accumulation_steps}",
+    f"scheduler={cfg.scheduler}",
+    f"warmup_steps={cfg.warmup_steps}",
+    f"sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}",
+    f"dual_decay={getattr(cfg, 'dual_decay', 'N/A')}",
+    f"do_bias_correction={getattr(cfg, 'do_bias_correction', 'N/A')}",
+    f"zero_init={getattr(cfg, 'zero_init', 'N/A')}",
+    f"seed={cfg.seed}", 
+    f"lr_end={cfg.lr_end}",
+    f"lr_start={cfg.lr_start}",
+    f"warmup_steps={cfg.warmup_steps}",
+    f"d_model={cfg.d_model}",
+    f"n_layers={cfg.n_layers}",
+    f"n_heads={cfg.n_heads}",
+    f"expand={cfg.expand}",
+    f"equal_betas={getattr(cfg, 'equal_betas', 'N/A')}", 
+    f"ns_steps={getattr(cfg, 'ns_steps', 'N/A')}",
+    f"last_linear_adam={getattr(cfg, 'last_linear_adam', 'N/A')}",
+    f"embedding_layer_optim={getattr(cfg, 'embedding_layer_optim', 'N/A')}",
+    f"nesterov={getattr(cfg, 'nesterov', 'N/A')}",
+
+
+  ]
+  
   wandb.init(
     project=cfg.wandb_project, 
     name=wandb_run_name, 
     dir=cfg.wandb_dir,
     config=cfg._asdict(), 
-    tags = [
-      f"optim={cfg.optim}"
-      f"lr={cfg.lr}",
-      f"wd={cfg.weight_decay}",
-      f"b1={cfg.beta1}",
-      f"b2={cfg.beta2}",
-      f"mom={getattr(cfg, 'momentum', 'N/A')}",
-      f"grad_clip={cfg.grad_clip}",
-      f"eps={cfg.eps}",
-      f"bs={cfg.micro_batch_size * cfg.grad_accumulation_steps}",
-      f"seq_len={cfg.seq_len}",
-      f"steps_budget={cfg.steps_budget}",
-      f"micro_batch_size={cfg.micro_batch_size}",
-      f"grad_accumulation_steps={cfg.grad_accumulation_steps}",
-      f"scheduler={cfg.scheduler}",
-      f"warmup_steps={cfg.warmup_steps}",
-      f"sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}",
-      f"dual_decay={getattr(cfg, 'dual_decay', 'N/A')}",
-      f"do_bias_correction={getattr(cfg, 'do_bias_correction', 'N/A')}",
-      f"zero_init={getattr(cfg, 'zero_init', 'N/A')}",
-      f"seed={cfg.seed}", 
-      f"lr_end={cfg.lr_end}",
-      f"lr_start={cfg.lr_start}",
-      f"warmup_steps={cfg.warmup_steps}",
-      f"d_model={cfg.d_model}",
-      f"n_layers={cfg.n_layers}",
-      f"n_heads={cfg.n_heads}",
-      f"expand={cfg.expand}",
-      f"equal_betas={getattr(cfg, 'equal_betas', 'N/A')}"
-    ]
+    tags = tags
   )
 
 
