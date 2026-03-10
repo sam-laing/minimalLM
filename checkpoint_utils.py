@@ -5,6 +5,34 @@ import torch
 from flax.training.checkpoints import latest_checkpoint
 
 
+def save_full_checkpoint(micro_step, model, engine, cfg):
+  """Save full checkpoint (weights + optimizer state) to optimizer-specific folder."""
+  optimizer = engine.optimizer
+  scheduler = engine.scheduler
+  scaler = engine.scaler
+  
+  state = {
+    "micro_step": micro_step,
+    "state_dict": model.state_dict(),
+    "optimizer": optimizer.state_dict(),
+    "scheduler": scheduler.state_dict() if scheduler else {},
+    "scaler": scaler.state_dict(),
+    "config": {k: v for k, v in cfg._asdict().items() if not k.startswith('_')}
+  }
+
+  # Get optimizer name from config
+  optim_name = getattr(cfg, 'optim', 'unknown')
+  base_dir = getattr(cfg, 'full_checkpoint_dir', '/fast/slaing/plainLMcheckpoints')
+  exp_dir = os.path.join(base_dir, optim_name)
+  
+  os.makedirs(exp_dir, exist_ok=True)
+    
+  save_path = os.path.join(exp_dir, f'ckpt_micro_step_{micro_step}.pth')
+  print(f"Saving full checkpoint to {save_path}")
+  torch.save(state, save_path)
+  print(f"Successfully saved full checkpoint!")
+
+
 def save_checkpoint(micro_step, model, engine, cfg, job_idx=None):
 
   optimizer = engine.optimizer

@@ -107,7 +107,6 @@ class Muon(Optimizer):
         - sep_qkv: optional QKV separation for Muon updates.... sep seems to matter a lot
         - AdamW for non muon parts in one optimizer
         - adjust_lr: as in Moonlight paper 
-        
         """
         defaults = dict(
             lr=lr,
@@ -131,27 +130,34 @@ class Muon(Optimizer):
         self._identify_optimizer_types()
 
     def _identify_optimizer_types(self):
-        all_params = []
+        # Find the last 2D weight parameter (lm_head) from decay_params (first group)
+        # This is needed because param_groups = [decay_params, no_decay_params]
+        # so all_params[-1] would be a norm layer, not the lm_head
+        last_2d_param_id = None
         for group in self.param_groups:
-            all_params.extend(group["params"])
+            # Only look in decay params (weight_decay > 0) for the last linear layer
+            if group.get("weight_decay", 0) > 0:
+                for p in group["params"]:
+                    if p.ndim == 2:
+                        last_2d_param_id = id(p)  # Keep updating to get the last one
 
-        last_param_id = id(all_params[-1]) if all_params else None
         last_linear_adam = self.param_groups[0].get("last_linear_adam", True)
 
         for group in self.param_groups:
             for p in group["params"]:
                 if not p.requires_grad:
                     continue
-                # Detect embedding parameters (nn.Embedding: 2D, usually shape (vocab_size, dim) or (num_embeddings, embedding_dim))
-                # Heuristic: if parameter is 2D and its shape[0] is much larger than shape[1], likely embedding
-                if p.ndim == 2 and (p.shape[0] > 1000 and p.shape[0] > 2 * p.shape[1]):
-                    self._optimizer_types[id(p)] = "embed"
-                elif p.ndim == 2 and id(p) == last_param_id:
-                    # Last linear layer
+                # Check last linear layer FIRST (lm_head has same shape pattern as embedding)
+                if p.ndim == 2 and id(p) == last_2d_param_id:
+                    # Last linear layer (lm_head)
                     if last_linear_adam:
                         self._optimizer_types[id(p)] = "adam"
                     else:
                         self._optimizer_types[id(p)] = "muon"
+                # Detect embedding parameters (nn.Embedding: 2D, usually shape (vocab_size, dim))
+                # Heuristic: if parameter is 2D and its shape[0] is much larger than shape[1], likely embedding
+                elif p.ndim == 2 and (p.shape[0] > 1000 and p.shape[0] > 2 * p.shape[1]):
+                    self._optimizer_types[id(p)] = "embed"
                 elif p.ndim == 2:
                     self._optimizer_types[id(p)] = "muon"
                 else:
@@ -303,6 +309,8 @@ class Muon(Optimizer):
     @torch.no_grad()
     def step(self):
         for group in self.param_groups:
+            embedding_layer_optim = group.get("embedding_layer_optim", "muon")
+            
             for p in group["params"]:
                 if p.grad is None:
                     continue
@@ -312,7 +320,13 @@ class Muon(Optimizer):
                 opt_type = self._optimizer_types.get(id(p), "muon")
 
                 if opt_type == "embed":
-                    self._embedding_layer_step(p, g, group, state)
+                    # Route embedding updates based on embedding_layer_optim setting
+                    if embedding_layer_optim == "muon":
+                        self._muon_step(p, g, group, state)
+                    elif embedding_layer_optim == "adam":
+                        self._adam_step(p, g, group, state)
+                    else:  # "rms" or other - use the custom RMS normalization method
+                        self._embedding_layer_step(p, g, group, state)
                 elif opt_type == "muon":
                     self._muon_step(p, g, group, state)
                 else:

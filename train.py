@@ -10,7 +10,7 @@ import utils
 from utils import print_master
 from torch_utils import pytorch_setup, destroy_ddp
 from data import get_dataloaders
-from checkpoint_utils import save_checkpoint, maybe_load_checkpoint
+from checkpoint_utils import save_checkpoint, maybe_load_checkpoint, save_full_checkpoint
 from models import construct_model
 from engine import TorchEngine
 import math
@@ -77,6 +77,11 @@ def main(_):
     if master_process and cfg.save_intermediate_checkpoints \
         and micro_step % cfg.save_every_steps == 0:
       save_checkpoint(micro_step-1, model, engine, cfg, JOB_IDX)
+    
+    # Full checkpoint (weights + optimizer state) to optimizer-specific folder
+    if master_process and getattr(cfg, 'save_full_checkpoints', False) \
+        and step % getattr(cfg, 'save_full_every_steps', 1550) == 0 and step > 0:
+      save_full_checkpoint(step, model, engine, cfg)
 
   if cfg.eval and getattr(cfg, "eval_final", False):
     print_master("Evaluating on validation set")
@@ -94,7 +99,11 @@ def main(_):
   # End of training: log and save checkpoint
   print_master(f"=== Training Completed! ===")
   if master_process and cfg.save_last_checkpoint:
-    save_checkpoint(micro_step-1, model, engine, cfg, JOB_IDX)
+    save_name = getattr(cfg, "save_name", None)
+    if save_name:
+      save_checkpoint(micro_step-1, model, engine, cfg, JOB_IDX, save_name=save_name)
+    else:
+      save_checkpoint(micro_step-1, model, engine, cfg, JOB_IDX)
 
   # DDP slaughtering
   destroy_ddp()
