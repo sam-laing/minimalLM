@@ -1,7 +1,7 @@
 import torch
 import math
 from torch.optim import Optimizer
-
+#before the recent update i had last linear as adam and embedding as muon as the default
 #Newton Schulz approx: from KJ
 @torch.compile
 def zeropower_via_newtonschulz5(G, steps=3, eps=1e-7):
