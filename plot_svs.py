@@ -80,6 +80,75 @@ def export_svs_to_csv(state_dict, optimizer_name, step, num_layers, output_dir):
     embed_df.to_csv(embed_csv_path)
     print(f"Saved: {embed_csv_path}")
 
+def _compute_sv_stats(sv):
+    """Compute summary statistics for a singular value array."""
+    s_max = float(sv[0])
+    s_min = float(sv[-1])
+    s_mean = float(np.mean(sv))
+    s_med = float(np.median(sv))
+    s_std = float(np.std(sv))
+    cond = s_max / (s_min + 1e-12)
+    flatness = s_mean / (s_max + 1e-12)
+    cv = s_std / (s_mean + 1e-12)
+    p = (sv ** 2) / (np.sum(sv ** 2) + 1e-12)
+    eff_rank = float(np.exp(-np.sum(p * np.log(p + 1e-12))))
+    return dict(sv_max=s_max, sv_min=s_min, sv_mean=s_mean, sv_median=s_med,
+                sv_std=s_std, condition_number=cond, flatness=flatness,
+                coeff_variation=cv, effective_rank=eff_rank)
+
+
+def print_sv_structure(state_dict, opt_name, step, num_layers):
+    """Print singular value structure summary and return rows for CSV export."""
+    print(f"\n{'='*80}")
+    print(f"  Singular Value Structure: {opt_name} (step {step})")
+    print(f"{'='*80}")
+
+    header = f"{'Matrix':<8} {'Layer':>5} | {'σ_max':>8} {'σ_min':>8} {'σ_mean':>8} {'σ_med':>8} | {'κ (cond)':>10} {'flat':>6} {'std/mean':>8} {'eff_rank':>8}"
+    print(header)
+    print("-" * len(header))
+
+    rows = []
+    summary = {}
+
+    for mat_name in ['Q', 'K', 'V', 'W_out']:
+        layer_stats = []
+        for layer_idx in range(num_layers):
+            if mat_name in ('Q', 'K', 'V'):
+                q_sv, k_sv, v_sv = get_qkv_svs(state_dict, layer_idx)
+                sv = {'Q': q_sv, 'K': k_sv, 'V': v_sv}[mat_name]
+            else:
+                sv = get_out_svs(state_dict, layer_idx)
+
+            stats = _compute_sv_stats(sv)
+            layer_stats.append(stats)
+            rows.append(dict(optimizer=opt_name, step=step, matrix=mat_name, layer=layer_idx, **stats))
+
+            print(f"{mat_name:<8} L{layer_idx:>3} | {stats['sv_max']:8.4f} {stats['sv_min']:8.4f} {stats['sv_mean']:8.4f} {stats['sv_median']:8.4f} | {stats['condition_number']:10.2f} {stats['flatness']:6.3f} {stats['coeff_variation']:8.4f} {stats['effective_rank']:8.1f}")
+
+        summary[mat_name] = layer_stats
+
+    # Embedding
+    embed_sv = get_embedding_svs(state_dict)
+    stats = _compute_sv_stats(embed_sv)
+    rows.append(dict(optimizer=opt_name, step=step, matrix='Embed', layer=-1, **stats))
+    print(f"{'Embed':<8} {'---':>5} | {stats['sv_max']:8.4f} {stats['sv_min']:8.4f} {stats['sv_mean']:8.4f} {stats['sv_median']:8.4f} | {stats['condition_number']:10.2f} {stats['flatness']:6.3f} {stats['coeff_variation']:8.4f} {stats['effective_rank']:8.1f}")
+
+    # Aggregated summary per matrix type
+    print(f"\n--- Aggregated across layers ({opt_name}, step {step}) ---")
+    agg_header = f"{'Matrix':<8} | {'mean(κ)':>10} {'mean(flat)':>10} {'mean(cv)':>10} {'mean(eff_rank)':>14}"
+    print(agg_header)
+    print("-" * len(agg_header))
+    for mat_name, layer_stats in summary.items():
+        mean_cond = np.mean([s['condition_number'] for s in layer_stats])
+        mean_flat = np.mean([s['flatness'] for s in layer_stats])
+        mean_cv = np.mean([s['coeff_variation'] for s in layer_stats])
+        mean_er = np.mean([s['effective_rank'] for s in layer_stats])
+        print(f"{mat_name:<8} | {mean_cond:10.2f} {mean_flat:10.3f} {mean_cv:10.4f} {mean_er:14.1f}")
+
+    print()
+    return rows
+
+
 def compare_adam_muon_svd():
     """Compare singular value distributions between Adam and Muon optimizers."""
     device = torch.device("cpu")
@@ -99,6 +168,8 @@ def compare_adam_muon_svd():
     
     os.makedirs('model_comparison_plots/svd', exist_ok=True)
     
+    all_sv_stats = []  # collect rows across all steps/optimizers
+    
     for step in checkpoint_steps:
         print(f"\n{'='*60}")
         print(f"Processing checkpoint step {step}")
@@ -113,6 +184,10 @@ def compare_adam_muon_svd():
         adam_state = load_checkpoint(adam_path, device)
         print("Loading Muon checkpoint...")
         muon_state = load_checkpoint(muon_path, device)
+        
+        # Print SV structure analysis
+        all_sv_stats.extend(print_sv_structure(adam_state, 'Adam', step, num_layers))
+        all_sv_stats.extend(print_sv_structure(muon_state, 'Muon', step, num_layers))
         
         # Export SVs to CSV for the last checkpoint
         if step == checkpoint_steps[-1]:
@@ -184,6 +259,12 @@ def compare_adam_muon_svd():
         plt.savefig(f'model_comparison_plots/svd/adam_vs_muon_qkv_svd_step{step}.pdf', dpi=150, bbox_inches='tight')
         plt.close(fig)
         print(f"Saved: model_comparison_plots/svd/adam_vs_muon_qkv_svd_step{step}.pdf")
+    
+    # Save all SV stats to a single CSV
+    stats_csv_path = 'model_comparison_plots/svd/sv_structure_stats.csv'
+    stats_df = pd.DataFrame(all_sv_stats)
+    stats_df.to_csv(stats_csv_path, index=False)
+    print(f"\nSaved SV structure stats: {stats_csv_path}")
     
     print("\n" + "="*60)
     print("All plots generated!")
