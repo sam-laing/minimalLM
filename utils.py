@@ -81,6 +81,8 @@ def init_wandb(cfg):
     wandb_run_name += f", a2s={cfg.adam_to_sgd_ratio}"
   if cfg.optim == "nestingMA":
     wandb_run_name = f"{cfg.optim}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
+  if getattr(cfg, 'model', '') == 'orth_transformer':
+    wandb_run_name += f", init={getattr(cfg, 'init_mode', 'N/A')}, nonlin={getattr(cfg, 'init_nonlinearity', 'N/A')}"
 
   tags = [
     f"optim={cfg.optim}",
@@ -115,8 +117,18 @@ def init_wandb(cfg):
     f"last_linear_adam={getattr(cfg, 'last_linear_adam', 'N/A')}",
     f"embedding_layer_optim={getattr(cfg, 'embedding_layer_optim', 'N/A')}",
     f"nesterov={getattr(cfg, 'nesterov', 'N/A')}",
-
-
+    f"model={getattr(cfg, 'model', 'N/A')}",
+    f"init_mode={getattr(cfg, 'init_mode', 'N/A')}",
+    f"init_nonlinearity={getattr(cfg, 'init_nonlinearity', 'N/A')}",
+    f"init_gain={getattr(cfg, 'init_gain', 'N/A')}",
+    f"perturb_radius={getattr(cfg, 'perturb_radius', 'N/A')}",
+    f"perturb_w_star_mode={getattr(cfg, 'perturb_w_star_mode', 'N/A')}",
+    f"mlp_class={getattr(cfg, 'mlp_class', 'N/A')}",
+    f"tie_embeddings={getattr(cfg, 'tie_embeddings', 'N/A')}",
+    f"torch_compile={getattr(cfg, 'torch_compile', 'N/A')}",
+    f"dtype={getattr(cfg, 'dtype', 'N/A')}",
+    f"fused_optim={getattr(cfg, 'fused_optim', 'N/A')}",
+    f"cooldown_steps={getattr(cfg, 'cooldown_steps', 'N/A')}",
   ]
   
   wandb.init(

@@ -18,6 +18,7 @@ env/
 *.csv
 *.json
 *.png
+*.pdf
 # Ignore any other temporary or sensitive files
 *.tmp
 *.bak

@@ -33,7 +33,7 @@ def save_full_checkpoint(micro_step, model, engine, cfg):
   print(f"Successfully saved full checkpoint!")
 
 
-def save_checkpoint(micro_step, model, engine, cfg, job_idx=None):
+def save_checkpoint(micro_step, model, engine, cfg, job_idx=None, save_name=None):
 
   optimizer = engine.optimizer
   scheduler = engine.scheduler
@@ -50,8 +50,9 @@ def save_checkpoint(micro_step, model, engine, cfg, job_idx=None):
   exp_dir = os.path.join(cfg.out_dir, cfg.exp_name)
   if job_idx is not None:  # subfolder for each job in the sweep
     exp_dir = os.path.join(exp_dir, f"job_idx_{job_idx}")
-    
-  save_path = os.path.join(exp_dir, f'ckpt_micro_step_{micro_step}.pth')
+  
+  filename = save_name if save_name else f'ckpt_micro_step_{micro_step}.pth'
+  save_path = os.path.join(exp_dir, filename)
   print(f"Saving checkpoint to {save_path}")
   torch.save(state, save_path)
   print(f"Successfully saved checkpoint!")

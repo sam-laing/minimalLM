@@ -1,0 +1,21 @@
+# Condor submission file for normal-init muon sweep
+
+LOGS_DIR=/home/slaing/minimalLM/llm_pretrain/logs
+executable=/home/slaing/minimalLM/cluster/condor/single_gpu/run.sh
+
+# Job specific vars
+config=/home/slaing/minimalLM/config/normal_init_muon_config.yaml
+n_jobs=6
+
+arguments = $(config) $(Process)
+
+error = $(LOGS_DIR)/err/job.$(Cluster).$(Process).err
+output = $(LOGS_DIR)/out/job.$(Cluster).$(Process).out
+log = $(LOGS_DIR)/log/job.$(Cluster).$(Process).log
+
+request_memory = 220000
+request_cpus = 12
+request_gpus = 1
+requirements = (TARGET.CUDADeviceName == "NVIDIA A100-SXM4-80GB")
+
+queue $(n_jobs)

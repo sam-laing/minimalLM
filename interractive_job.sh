@@ -5,10 +5,10 @@
 bid=${1:-25}
 
 # Fixed resource specifications
-cpus=4
-memory=20000
+cpus=12
+memory=220000
 gpus=1
-gpu_type="NVIDIA A100-SXM4-40GB"
+gpu_type="NVIDIA A100-SXM4-80GB"
 
 echo "Requesting interactive job with the following specifications:"
 echo "- Bid: $bid"

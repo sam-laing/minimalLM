@@ -22,6 +22,27 @@ def construct_model(cfg):
     )
     model = Transformer(model_cfg)
 
+  # Orthogonal-init Transformer (for Muon)
+  elif cfg.model == "orth_transformer":
+    from .orth_transformer import Transformer, ModelConfig
+    model_cfg = ModelConfig(
+      vocab_size = cfg.vocab_size,
+      dim = cfg.d_model,
+      expand = float(Fraction(cfg.expand)),
+      n_layers = cfg.n_layers,
+      n_heads = cfg.n_heads,
+      rmsorm_eps = 1e-6,
+      mlp = cfg.mlp_class,
+      seq_len = cfg.seq_len,
+      tie_embeddings = cfg.tie_embeddings,
+      init_mode = getattr(cfg, 'init_mode', 'kaiming_orthog'),
+      init_gain = getattr(cfg, 'init_gain', 0.02),
+      init_nonlinearity = getattr(cfg, 'init_nonlinearity', 'silu'),
+      perturb_radius = getattr(cfg, 'perturb_radius', 0.01),
+      perturb_w_star_mode = getattr(cfg, 'perturb_w_star_mode', 'kaiming'),
+    )
+    model = Transformer(model_cfg)
+
   # Pythia
   elif cfg.model.startswith("pythia"):
     from transformers import AutoConfig, AutoModelForCausalLM
