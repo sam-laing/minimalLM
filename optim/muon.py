@@ -292,7 +292,8 @@ class Muon(Optimizer):
         # steepest descent under the \ell1->RMS operator norm:
         # normalize each column by its RMS
         col_rms = torch.sqrt((g_eff ** 2).mean(dim=0, keepdim=True) + eps)  # (1, vocab)
-        update = g_eff / col_rms  # (embed_dim, vocab) — each col has unit RMS
+        # divide by sqrt of input dimension too
+        update = g_eff / (col_rms * g_eff.shape[0])  # (embed_dim, vocab) — each col has unit RMS
 
         # lr scaling: match Muon's adjust_lr spirit
         # sqrt(embed_dim) keeps the effective step size consistent with weight matrices
