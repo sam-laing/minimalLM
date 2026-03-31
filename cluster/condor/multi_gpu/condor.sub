@@ -5,7 +5,7 @@ LOGS_DIR=/fast/slaing/logs/llm
 executable=/home/slaing/llm_pretrain/cluster/condor/multi_gpu/run.sh
 
 # Job specific vars
-config=config/config.yaml
+config=config/multi_gpu_adamw_config.yaml
 n_jobs=1
 
 # Args

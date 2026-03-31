@@ -74,7 +74,7 @@ def init_wandb(cfg):
 
   wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, , lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, bs ={cfg.micro_batch_size * cfg.grad_accumulation_steps}"
   if cfg.optim == "muon":
-    wandb_run_name += f", sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}, dual_decay={getattr(cfg, 'dual_decay', 'N/A')}, nes={getattr(cfg, 'nesterov', 'N/A')}, mom={getattr(cfg, 'momentum', 'N/A')}"
+    wandb_run_name += f", sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}, dual_decay={getattr(cfg, 'dual_decay', 'N/A')}, nes={getattr(cfg, 'nesterov', 'N/A')}, mom={getattr(cfg, 'momentum', 'N/A')}, orthog_method={getattr(cfg, 'orthog_method', 'newtonschulz')}, polar_steps={getattr(cfg, 'polar_steps', 'N/A')}"
   if cfg.optim == "custom_adamw":
     wandb_run_name += f", bias_c={getattr(cfg, 'do_bias_correction', 'N/A')}, zero_init={getattr(cfg, 'zero_init', 'N/A')}"
   if cfg.optim == "adam2sgd":
@@ -102,6 +102,8 @@ def init_wandb(cfg):
     f"warmup_steps={cfg.warmup_steps}",
     f"sep_qkv={getattr(cfg, 'sep_qkv', 'N/A')}",
     f"dual_decay={getattr(cfg, 'dual_decay', 'N/A')}",
+    f"orthog_method={getattr(cfg, 'orthog_method', 'newtonschulz')}",
+    f"polar_steps={getattr(cfg, 'polar_steps', 'N/A')}",
     f"do_bias_correction={getattr(cfg, 'do_bias_correction', 'N/A')}",
     f"zero_init={getattr(cfg, 'zero_init', 'N/A')}",
     f"seed={cfg.seed}", 

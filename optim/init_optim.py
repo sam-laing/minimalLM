@@ -104,6 +104,8 @@ def intialize_optimizer(param_groups, cfg):
       momentum=getattr(cfg, 'momentum', b1),
       nesterov=getattr(cfg, 'nesterov', False),
       ns_steps=getattr(cfg, 'ns_steps', None),
+      orthog_method=getattr(cfg, 'orthog_method', 'newtonschulz'),
+      polar_steps=getattr(cfg, 'polar_steps', 10),
       sep_qkv=getattr(cfg, 'sep_qkv', False),
       dual_decay=getattr(cfg, 'dual_decay', False),
       weight_decay=cfg.weight_decay,
