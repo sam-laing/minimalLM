@@ -42,4 +42,8 @@ llm_pretrain/logs/
 !**/config.yaml
 *.yaml
 
-model_comparison_plots/
+model_comparison_plots/analysis/
+plainLM.egg-info/
+*.log
+*.out
+*.err

@@ -2,34 +2,36 @@
 ## change paths with your own!
 
 deterministic: True
-seed: [9996, 9997, 9998]  
+seed: 9996
 one_seeded: true
 
-trainset_path: "/fast/slaing/data/lm/slim_pajama/new_sp_15B_tokens/train"
-vocab_size: 50280
+trainset_path: "/data/horse/ws/sala597i-slaing/data/lm/nemotron_gpt2_1.8B_tokens/train"
+vocab_size: 50304
 seq_len: 2048
 sampler: 'sequential'
 sampler_seed: null
 num_workers: 4
 
 eval: True
-validset_path: "/fast/slaing/data/lm/slim_pajama/new_valid/validation" 
+validset_path: "/data/horse/ws/sala597i-slaing/data/lm/nemotron_gpt2_1.8B_tokens/valid"
 eval_every_steps: 99999999999
 eval_final: True
 
 model: 'transformer'
-d_model: 768
+d_model: 576
 mlp_class: 'glu'
 expand: '8/3'
-n_layers: 12
-n_heads: 12
+n_layers: 8
+n_heads: 9
 rms_norm: True
 tie_embeddings: False
 torch_compile: True
 
 # note: set one of these two
 # note: step budget=token_budget/(seq_len * micro_batch_size * grad_accumulation_steps)
-steps_budget: 4800
+# 3433 steps * 2048 seq_len * 32 micro_batch * 8 grad_accum = ~1.8B tokens (one epoch
+# over the full 1.8B-token nemotron_gpt2_1.8B_tokens train set)
+steps_budget: 3433
 
 # note: this is micro batch size if grad_accumulation_steps>1
 # note: with ddp, effective batch size = batch_size * grad_accumulation_steps * ddp_world_size
@@ -40,21 +42,34 @@ grad_accumulation_steps: 8
 # note: float16 data type will automatically use a GradScaler
 dtype: 'bfloat16'
 
-optim: "custom_adamw"
-fused_optim: False 
-lr: 0.008     
-weight_decay: 0.1
-beta1: [0.95]
-beta2: [0.95]
+optim: "muon"
+fused_optim: False
+lr: 0.01
+weight_decay: 0.0
+beta1: 0.95
+beta2: 0.95
 dampening: 0.1
 eps: 1.e-8
 grad_clip: 1.0
-do_bias_correction: [true, false]
-zero_init: [true] #whether to initialise the moments to zero (true) or to g, g^2 (false)
+do_bias_correction: true
+zero_init: true #whether to initialise the moments to zero (true) or to g, g^2 (false)
 eps_inside_sqrt: false
 adam_to_sgd_ratio: 1.0
 
-scheduler: ["warmup_cosine"]
+# muon-specific: apply muon (not the adam fallback) to every matrix param,
+# including the embedding and LM head
+momentum: 0.9
+ns_steps: 5
+sep_qkv: true
+embedding_layer_optim: 'muon'
+last_linear_adam: false
+
+# rotation-robustness ablation: rotate the embedding grad by a fixed random
+# orthogonal matrix, un-rotate the resulting update (see engine/engine.py)
+rotate_embedding: false
+rotation_seed: 123
+
+scheduler: "warmup_cosine"
 warmup_steps: 0.1
 cooldown_steps: null
 lr_start: 1.e-6
@@ -65,11 +80,12 @@ log_every_steps: 1
 print_progress: True
 
 use_wandb: True
-wandb_project: 'llm_bias_correction'
-wandb_dir: '/fast/slaing/logs/llm/wandb'
-wandb_run_name: "bias_correction_test" 
-exp_name: 'tr_check_not_fused'
-out_dir: '/fast/slaing/exp/llm'
+wandb_project: 'toy_muon_scaled'
+wandb_entity: 'heavy_weights'
+wandb_dir: '/data/horse/ws/sala597i-slaing/wandb_logs'
+wandb_run_name: "muon_90M_1.8B_orthinit"
+exp_name: 'muon_90M_1p8B'
+out_dir: '/data/horse/ws/sala597i-slaing/checkpoints'
 wandb_api_key: "0b4cb5f85aad923fbaec987675544b3d4530b0e4"
 over_write: True
 
@@ -78,8 +94,8 @@ resume_micro_step: null
 resume_exp_name: null
 
 save_last_checkpoint: True
-save_intermediate_checkpoints: False
-save_every_steps: null
-
-track_moments: False
-moment_plots: /fast/slaing/adam_moment_plots/llm
+save_intermediate_checkpoints: True
+# ~59 checkpoints total: 58 periodic (every 472 micro_steps = every 59
+# optimizer steps, out of 3433 total -> spans early/mid/late training) + 1
+# final checkpoint from save_last_checkpoint above
+save_every_steps: 472

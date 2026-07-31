@@ -67,7 +67,7 @@ def load_config(path, job_idx=None):
 
 def init_wandb(cfg):
   """Initalizes a wandb run"""
-  #os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
+  os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
   #wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
@@ -134,10 +134,11 @@ def init_wandb(cfg):
   ]
   
   wandb.init(
-    project=cfg.wandb_project, 
-    name=wandb_run_name, 
+    project=cfg.wandb_project,
+    entity=getattr(cfg, 'wandb_entity', None),
+    name=wandb_run_name,
     dir=cfg.wandb_dir,
-    config=cfg._asdict(), 
+    config=cfg._asdict(),
     tags = tags
   )
 

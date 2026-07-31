@@ -44,7 +44,11 @@ def save_checkpoint(micro_step, model, engine, cfg, job_idx=None, save_name=None
     "state_dict": model.state_dict(),
     "optimizer": optimizer.state_dict(),
     "scheduler": scheduler.state_dict() if scheduler else {},
-    "scaler": scaler.state_dict()
+    "scaler": scaler.state_dict(),
+    # momentum buffers live inside "optimizer" (per-param optimizer state).
+    # grads are cleared by zero_grad() right after each step, so engine.py
+    # stashes a copy (engine.last_grads) before that happens - grab it here.
+    "grads": getattr(engine, "last_grads", None),
   }
 
   exp_dir = os.path.join(cfg.out_dir, cfg.exp_name)
