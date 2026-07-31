@@ -38,9 +38,10 @@ llm_pretrain/logs/
 *.llm_pretrain_logs
 
 
-# ignore all but config.yaml yaml files
-!**/config.yaml
+# ignore all yaml files except our own config files
 *.yaml
+!config/config.yaml
+!config/config_runpod.yaml
 
 model_comparison_plots/analysis/
 plainLM.egg-info/
