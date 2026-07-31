@@ -25,8 +25,9 @@ pull a stale version without any of this.
 RunPod console → Storage → Network Volumes → New Volume.
 
 - Pick a datacenter region that has the GPU type you want (check availability first).
-- Size: 150GB is comfortably enough — tokenized SlimPajama is ~7-15GB, and 5 runs
-  worth of checkpoints (4 each, per current config) is ~22GB.
+- Size: 50GB (real usage is ~30-37GB: tokenized SlimPajama ~7-15GB + 5 runs worth
+  of checkpoints at 4 each ~22GB). Storage bills monthly whether or not a pod is
+  attached (~$0.07/GB/mo), so don't over-provision.
 
 ## 2. Deploy one pod — training GPU, same pod does data prep first
 
