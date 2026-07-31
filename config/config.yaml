@@ -86,7 +86,7 @@ wandb_dir: '/data/horse/ws/sala597i-slaing/wandb_logs'
 wandb_run_name: "muon_90M_1.8B_orthinit"
 exp_name: 'muon_90M_1p8B'
 out_dir: '/data/horse/ws/sala597i-slaing/checkpoints'
-wandb_api_key: "0b4cb5f85aad923fbaec987675544b3d4530b0e4"
+# wandb_api_key intentionally omitted: set the WANDB_API_KEY env var instead (see README)
 over_write: True
 
 resume: False

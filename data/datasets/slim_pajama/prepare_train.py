@@ -16,7 +16,7 @@ from transformers import AutoTokenizer
 # --------------------------------------------------------------------
 # Config & Paths
 
-out_path = "/data/cat/ws/sala597i-slaing/data/lm/slim_pajama/sp_1.8B_tokens"
+out_path = os.environ.get("PLAINLM_DATA_OUT", "/workspace/data/lm/sp_1.8B_tokens")
 dataset_name = "gmongaras/SlimPajama-627B_Reupload"
 split = 'train'
 
@@ -25,10 +25,9 @@ seq_len = 2048
 max_seq_length = seq_len + 1
 ordering = "randomized"
 
-# Fixed, considerate footprint for this shared interactive node (c1) -
-# do NOT auto-detect via os.cpu_count(), it returns the whole node's 64
-# cores regardless of how many other users are logged in.
-num_cpus = 8
+# Override with PLAINLM_NUM_CPUS if the shared node isn't fully yours,
+# otherwise default to all visible cores (fine on a dedicated RunPod pod).
+num_cpus = int(os.environ.get("PLAINLM_NUM_CPUS", os.cpu_count() or 8))
 
 # Force HF Dataset temp cache to node-local fast storage (/tmp) to avoid Lustre locking
 cache_dir = os.path.join(tempfile.gettempdir(), f"hf_cache_{os.getuid()}")

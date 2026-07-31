@@ -23,7 +23,7 @@ from transformers import AutoTokenizer
 # Config
 
 # Your path where to save dataset
-out_path = "/fast/slaing/data/lm/slim_pajama/new_valid"
+out_path = os.environ.get("PLAINLM_DATA_OUT", "/workspace/data/lm/sp_1.8B_tokens")
 
 # HF dataset name
 dataset_name = "cerebras/SlimPajama-627B"
@@ -38,7 +38,7 @@ max_seq_length = seq_len+1
 shuffle_raw_data = True
 ordering = "randomized"
 
-num_proc = 8
+num_proc = int(os.environ.get("PLAINLM_NUM_CPUS", os.cpu_count() or 8))
 map_setup = dict(
   batched=True,
   batch_size=1024,

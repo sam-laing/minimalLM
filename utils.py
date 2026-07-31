@@ -67,7 +67,14 @@ def load_config(path, job_idx=None):
 
 def init_wandb(cfg):
   """Initalizes a wandb run"""
-  os.environ["WANDB_API_KEY"] = cfg.wandb_api_key
+  wandb_api_key = getattr(cfg, 'wandb_api_key', None)
+  if wandb_api_key:
+    os.environ["WANDB_API_KEY"] = wandb_api_key
+  elif "WANDB_API_KEY" not in os.environ:
+    raise RuntimeError(
+      "No WandB API key found. Set the WANDB_API_KEY environment variable "
+      "(e.g. `export WANDB_API_KEY=...` or `wandb login`) rather than storing it in config.yaml."
+    )
   os.environ["WANDB__SERVICE_WAIT"] = "600"
   os.environ["WANDB_SILENT"] = "true"
   #wandb_run_name = f"{cfg.optim}, {cfg.scheduler}, lr={cfg.lr}, wd={cfg.weight_decay}, b1={cfg.beta1}, b2={cfg.beta2}, seed={cfg.seed}"
