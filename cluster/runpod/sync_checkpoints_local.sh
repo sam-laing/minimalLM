@@ -20,7 +20,7 @@ mkdir -p "$LOCAL_DIR"
 echo "Syncing $POD_HOST:$POD_PORT:/workspace/checkpoints/ -> $LOCAL_DIR every ${INTERVAL}s. Ctrl+C to stop."
 
 while true; do
-  rsync -avz --partial -e "ssh -p $POD_PORT -i $SSH_KEY" \
+  rsync -avz --partial -e "ssh -p $POD_PORT -i $SSH_KEY -o IdentitiesOnly=yes" \
     "${POD_HOST}:/workspace/checkpoints/" "$LOCAL_DIR/" \
     && echo "[$(date '+%H:%M:%S')] synced" \
     || echo "[$(date '+%H:%M:%S')] sync failed, will retry"

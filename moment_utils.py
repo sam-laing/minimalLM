@@ -36,6 +36,48 @@ def get_moment_dict(model, optimizer)->dict:
   
   return moment_dict
 
+
+def get_muon_momentum_dict(model, optimizer) -> dict:
+  """
+  Iterates through the optimizer's state dict and records the Muon
+  momentum_buffer for each 2D (matrix) parameter, keyed by param name.
+  1D params (norm gains, biases) are skipped: conditioning/SVD isn't
+  meaningful for them.
+  """
+  param_to_name = {id(param): name for name, param in model.named_parameters()}
+
+  momentum_dict = {}
+  for group in optimizer.param_groups:
+    for param in group['params']:
+      state = optimizer.state.get(param, {})
+      if 'momentum_buffer' in state and param.dim() == 2:
+        momentum_dict[param_to_name[id(param)]] = state['momentum_buffer'].detach().clone()
+
+  return momentum_dict
+
+
+def stable_rank(matrix: Tensor) -> float:
+  """
+  (sum_i sigma_i^2) / sigma_max^2, normalized by min(shape) to lie in (0, 1].
+  Low values = energy concentrated in a few directions ("ill-conditioned").
+  More robust than raw condition number (sigma_max/sigma_min), which is
+  dominated by whatever the smallest singular value happens to be.
+  """
+  s = torch.linalg.svdvals(matrix.float())
+  raw = (s ** 2).sum() / (s[0] ** 2)
+  return (raw / min(matrix.shape)).item()
+
+
+def rank_momentum_conditioning(model, optimizer):
+  """
+  Returns [(param_name, normalized_stable_rank), ...] sorted ascending,
+  i.e. most ill-conditioned momentum buffer first.
+  """
+  momentum_dict = get_muon_momentum_dict(model, optimizer)
+  scored = [(name, stable_rank(buf)) for name, buf in momentum_dict.items()]
+  return sorted(scored, key=lambda x: x[1])
+
+
 def get_histogram_for_adam_layer(layer_tensor, n_bins=100):
     """Returns normalized histogram and bin edges"""
     min_elt, max_elt = layer_tensor.min(), layer_tensor.max()
