@@ -15,12 +15,15 @@ from torch.utils.data.distributed import DistributedSampler
 class StatefulSequentialSampler(Sampler):
     """Samples elements sequentially, always in the same order."""
 
-    def __init__(self, data_source: Sized, batch_size=None, start_idx: int = 0):
+    def __init__(self, data_source: Sized, batch_size=None, start_idx: int = 0, seed=None):
         """
         Args:
             data_source (Dataset): Pytorch dataset to sample from
             batch_size (int): batch size we want the sampler to sample
             start_idx (int): start index of the dataset
+            seed: unused - accepted only so callers can pass the same seed_to_use
+                  as StatefulDistributedSampler; sampling here is always
+                  sequential, never shuffled.
         """
         self.data_source = data_source
         self.start_idx = start_idx * batch_size
