@@ -132,13 +132,17 @@ def run_condition(label, ns, use_exact_polar, selected_names, probe_cfg, ckpt,
   rows = []
   data_iter = iter(trainloader)
   for step in range(num_iters):
-    last_loss = None
+    micro_losses = []
     for _ in range(accumulation_steps):
       batch = next(data_iter)
-      last_loss = engine.step(batch)
-    rows.append({"step": step, "loss": float(last_loss)})
+      micro_losses.append(float(engine.step(batch)))
+    # average across the accumulation window, matching how utils.log()
+    # aggregates real training's loss - a single micro-batch's loss is
+    # noisier than this, especially with only a few hundred logged points
+    avg_loss = sum(micro_losses) / len(micro_losses)
+    rows.append({"step": step, "loss": avg_loss})
     if step % 10 == 0:
-      print(f"  step {step}: loss={float(last_loss):.4f}")
+      print(f"  step {step}: loss={avg_loss:.4f}")
 
   del engine
   torch.cuda.empty_cache()
