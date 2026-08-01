@@ -38,7 +38,10 @@ from optim import intialize_optimizer
 FLAGS = flags.FLAGS
 flags.DEFINE_string('config', 'config/config_runpod.yaml', 'Base config (paths, model size, etc).')
 flags.DEFINE_string('ckpt_dir', None, 'Directory containing ckpt_micro_step_*.pth files.')
-flags.DEFINE_string('out_path', 'analysis/spectral_results.csv', 'Where to write the results CSV.')
+flags.DEFINE_string('out_path', 'analysis/spectral_results.csv', 'Where to write the flat results CSV.')
+flags.DEFINE_string('json_out_path', 'analysis/spectral_results.json',
+                     'Where to write the nested JSON (per checkpoint -> per layer -> '
+                     'momentum/gradient side by side, for direct comparison).')
 flags.mark_flag_as_required('ckpt_dir')
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -47,7 +50,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 NS_A, NS_B, NS_C = 3.4445, -4.7750, 2.0315
 NS_EPS = 1e-7
 
-NS_Q_VALUES = [3, 5, 8]
+NS_Q_VALUES = [2, 3, 5, 10, 15]
 TAU_VALUES = [1e-2, 1e-3, 1e-4]
 FRAC_VALUES = [0.5, 0.9]
 CONVERGENCE_TOL = 0.1
@@ -58,6 +61,13 @@ FIELDNAMES = (
    "condition_number", "kappa_50", "kappa_90", "flatness_F"]
   + [f"T_{tau:g}" for tau in TAU_VALUES]
   + [f"delta_{q}" for q in NS_Q_VALUES]
+  # post-NS singular value distribution at each depth q (exact polar's
+  # distribution is degenerate: every mode maps to exactly 1.0) - shows how
+  # far NS_q's actual output spectrum still is from that flat target, and
+  # specifically how the worst (tail) mode lags the median
+  + [f"sv_min_ns{q}" for q in NS_Q_VALUES]
+  + [f"sv_median_ns{q}" for q in NS_Q_VALUES]
+  + [f"sv_max_ns{q}" for q in NS_Q_VALUES]
   + [f"energy_tiny_frac_polar_tau{tau:g}" for tau in TAU_VALUES]
   + [f"energy_tiny_frac_ns{q}_tau{tau:g}" for q in NS_Q_VALUES for tau in TAU_VALUES]
   + [f"min_q_top{int(f*100)}pct" for f in FRAC_VALUES]
@@ -86,7 +96,7 @@ def spectral_row(name, matrix_type, buf, step, pct):
   buf = buf.to(DEVICE).float()
   s = torch.linalg.svdvals(buf)  # descending
   r = s.numel()
-  sigma1 = s[0]
+  sigma1 = s[0].item()
 
   # --- metric 1: practical spectral conditioning ---
   idx50 = min(r - 1, int(torch.ceil(torch.tensor(0.5 * r)).item()) - 1)
@@ -129,6 +139,10 @@ def spectral_row(name, matrix_type, buf, step, pct):
     phi_q_vals[q] = pv
     delta_q = torch.sqrt(((pv - 1.0) ** 2).mean()).item()
     row[f"delta_{q}"] = delta_q
+    # post-NS singular value distribution (target: all == 1.0 for exact polar)
+    row[f"sv_min_ns{q}"] = pv.min().item()
+    row[f"sv_median_ns{q}"] = pv.median().item()
+    row[f"sv_max_ns{q}"] = pv.max().item()
 
   # --- energy fraction assigned to tiny modes: exact polar vs NS_q ---
   for tau in TAU_VALUES:
@@ -183,8 +197,15 @@ def main(_):
   print(f"tracking {len(matrix_params)} matrix params (qkv split further at read time)")
 
   os.makedirs(os.path.dirname(FLAGS.out_path) or '.', exist_ok=True)
+  os.makedirs(os.path.dirname(FLAGS.json_out_path) or '.', exist_ok=True)
 
   import csv
+  import json
+
+  # nested structure: checkpoint -> layer -> {momentum: {...}, gradient: {...}}
+  # for direct side-by-side comparison, per the "gradient vs momentum" spec item
+  json_results = {"checkpoints": []}
+
   with open(FLAGS.out_path, 'w', newline='') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES)
     writer.writeheader()
@@ -203,6 +224,8 @@ def main(_):
       else:
         print(f"  WARNING: checkpoint {step} has no saved grads, skipping gradient metrics")
 
+      ckpt_entry = {"checkpoint_step": step, "pct_of_training": pct, "layers": {}}
+
       for name, p in matrix_params.items():
         # --- momentum buffer(s), split q/k/v the way Muon's sep_qkv stores them ---
         state = optimizer.state.get(p, {})
@@ -217,6 +240,9 @@ def main(_):
           full_name = f"{name}.{sub_name}" if sub_name != "full" else name
           row = spectral_row(full_name, "momentum", buf, step, pct)
           writer.writerow(row)
+          ckpt_entry["layers"].setdefault(full_name, {})["momentum"] = {
+            k: v for k, v in row.items() if k not in ("checkpoint_step", "pct_of_training", "layer", "matrix_type")
+          }
 
         # --- raw gradient, manually split q/k/v to match, since it's saved fused ---
         if grads is not None:
@@ -232,11 +258,19 @@ def main(_):
               full_name = f"{name}.{sub_name}" if sub_name != "full" else name
               row = spectral_row(full_name, "gradient", gbuf, step, pct)
               writer.writerow(row)
+              ckpt_entry["layers"].setdefault(full_name, {})["gradient"] = {
+                k: v for k, v in row.items() if k not in ("checkpoint_step", "pct_of_training", "layer", "matrix_type")
+              }
 
       csvfile.flush()
+      json_results["checkpoints"].append(ckpt_entry)
       print(f"  checkpoint {step}: done")
 
+  with open(FLAGS.json_out_path, 'w') as jf:
+    json.dump(json_results, jf, indent=2)
+
   print(f"\nsaved -> {FLAGS.out_path}")
+  print(f"saved -> {FLAGS.json_out_path}")
 
 
 if __name__ == "__main__":
